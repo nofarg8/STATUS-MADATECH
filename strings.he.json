@@ -1,0 +1,97 @@
+{
+  "branding": {
+    "title": "סטטוס מדע וטכנולוגיה תשפ\"ז",
+    "subtitle": "המינהל לחינוך התיישבותי פנימייתי ועליית הנוער",
+    "subtitleUrl": "https://sites.google.com/hityash.org/madahit/%D7%93%D7%A3-%D7%94%D7%91%D7%99%D7%AA"
+  },
+  "welcome": {
+    "headline": "ברוכים הבאים לעדכון סטטוס מו\"ט תשפ\"ז",
+    "subtitle": "השנה התהליך קצר בהרבה. רוב הנתונים שלכם כבר אצלנו - צריך רק לאשר או לעדכן.",
+    "defaultApprovalNotice": "כל שדה שלא תסמנו כ'לא' ייחשב כאישור שהנתון נשאר כמו בשנה הקודמת.",
+    "timeBadge": "זמן ממוצע לסיום: 7-10 דקות",
+    "selectLabel": "בחרו את בית הספר שלכם",
+    "selectPlaceholder": "התחילו להקליד שם בית ספר או סמל מוסד...",
+    "selectHelper": "ניתן לחפש לפי שם בית ספר או סמל מוסד",
+    "ctaButton": "התחלה",
+    "resultsLabel": "תוצאות חיפוש",
+    "noResults": "לא נמצאו בתי ספר תואמים"
+  },
+  "overview": {
+    "title": "סקירת הנתונים שנמצאו",
+    "subtitle": "אלה נתוני השנה הקודמת שנשלפו מקובץ הנתונים המחולץ עבור בית הספר שנבחר.",
+    "startWizard": "המשך לאימות ועדכון",
+    "switchSchool": "בחירת בית ספר אחר",
+    "sourceBadge": "מקור: responses.xlsx"
+  },
+  "submitted": {
+    "title": "הטופס כבר הוגש",
+    "subtitle": "המערכת זיהתה שכבר קיימת הגשה סופית לבית הספר הזה.",
+    "submittedAt": "הוגש בתאריך",
+    "openForCorrection": "פתיחה לתיקון",
+    "viewSummary": "צפייה בסיכום",
+    "thanksTitle": "תודה! הטופס נשלח בהצלחה",
+    "thanksSubtitle": "סטטוס מדע וטכנולוגיה תשפ\"ז של בית הספר עודכן בגיליון. ניתן לסגור את הלשונית.",
+    "thanksHomeBtn": "חזרה למסך הראשי"
+  },
+  "wizard": {
+    "title": "אימות ועדכון",
+    "subtitle": "עברו על הנתונים, אשרו את מה שלא השתנה ועדכנו רק את מה שצריך.",
+    "section": "חלק",
+    "approveAll": "✓ כל החלק נשאר אותו דבר",
+    "approveAllHelp": "אם לא חל שינוי בחלק זה מאז שנה שעברה, לחצו כאן ועברו לחלק הבא",
+    "allApproved": "החלק אושר ללא שינוי",
+    "complete": "השלמת חלק",
+    "previous": "→ הקודם",
+    "next": "הבא ←",
+    "summary": "לסיכום",
+    "saveDraft": "שמור טיוטה",
+    "sampleNotice": "",
+    "updateStrip": "עודכנו {count} שדות · כל היתר אושר ללא שינוי",
+    "pendingWarning": "יש עדכון פתוח שלא אושר. אשרו אותו או בטלו לפני מעבר למסך אחר."
+  },
+  "summary": {
+    "title": "סיכום לפני שליחה",
+    "subtitle": "בשלב 1 זהו מסך סטטי המדגים את זרימת הסיום. שדות שלא עודכנו נחשבים כאישור שהנתון נשאר כמו בשנה הקודמת.",
+    "submitted": "שליחה סופית",
+    "backToWizard": "חזרה לעריכה",
+    "confirmedFields": "שדות שאושרו כולל ברירת מחדל",
+    "updatedFields": "שדות שסומנו לעדכון",
+    "sectionsDone": "חלקים שאושרו",
+    "notYet": "עדיין לא בוצעה שליחה",
+    "changedFieldsTitle": "שדות שעודכנו",
+    "previousValue": "ערך קודם",
+    "newValue": "ערך חדש",
+    "noChanges": "לא בוצעו עדכונים. כל השדות יאושרו כפי שהיו בשנה הקודמת."
+  },
+  "verification": {
+    "lastYearLabel": "בשנה החולפת דיווחת:",
+    "currentYearLabel": "עדכון לשנה זו:",
+    "stayedSameQuestion": "האם הנתון נשאר אותו דבר?",
+    "confirmBtn": "✓ כן",
+    "editBtn": "✎ לא",
+    "saveBtn": "אישור עדכון",
+    "cancelBtn": "ביטול",
+    "confirmedTag": "✓ אושר ללא שינוי",
+    "updatedTag": "✎ סומן לעדכון",
+    "sourceEmpty": "לא נרשם ערך במקור",
+    "newQuestion": "שאלה חדשה לשנה זו",
+    "matrixSame": "✓ הכל אותו דבר",
+    "matrixPartial": "✎ צריך לעדכן פריט אחד",
+    "matrixFull": "✎ צריך לעדכן כמה פריטים"
+  },
+  "navigation": {
+    "back": "→ הקודם",
+    "saveDraft": "שמור טיוטה",
+    "next": "הבא ←",
+    "submit": "✓ שליחה סופית"
+  },
+  "saveIndicator": {
+    "savedNow": "נשמר עכשיו",
+    "savedStatic": "נשמר כטיוטת תצוגה בשלב 1"
+  },
+  "footer": {
+    "ministry": "מינהל ההתיישבותי",
+    "ministryFull": "משרד החינוך",
+    "year": "תשפ\"ז"
+  }
+}

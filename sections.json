@@ -1,0 +1,147 @@
+[
+  {
+    "id": 1,
+    "title": "זיהוי בית ספר ורכז",
+    "description": "פרטי בית הספר והרכז/ת כפי שדווחו בשנה הקודמת.",
+    "fields": [
+      { "key": "submitter_email", "label": "אימייל הממלא", "pattern": "A", "type": "email" },
+      { "key": "coordinator_continues", "label": "האם הרכז/ת ממשיכה?", "pattern": "B", "type": "yes-no" },
+      { "key": "coordinator_lastName", "label": "שם משפחה רכז/ת", "pattern": "A", "type": "text" },
+      { "key": "coordinator_firstName", "label": "שם פרטי רכז/ת", "pattern": "A", "type": "text" },
+      { "key": "coordinator_phone", "label": "טלפון רכז/ת", "pattern": "A", "type": "phone" },
+      { "key": "coordinator_email", "label": "דוא\"ל רכז/ת", "pattern": "A", "type": "email" }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "צוות ההוראה",
+    "description": "נתוני כוח האדם בצוות מדע וטכנולוגיה.",
+    "fields": [
+      { "key": "staff_teacher_count", "label": "מספר המורים המלמדים מו\"ט בחט\"ב", "pattern": "A", "type": "number" },
+      { "key": "staff_untrained_count", "label": "מורים ללא הכשרה מקצועית", "pattern": "A", "type": "text" },
+      { "key": "staff_missing_count", "label": "מורי מו\"ט חסרים", "pattern": "A", "type": "number" }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "כלים דיגיטליים בהוראה",
+    "description": "מטריצת שימוש בכלים דיגיטליים.",
+    "pattern": "C",
+    "fields": [
+      { "key": "tools_books_digital", "label": "ספרים דיגיטליים" },
+      { "key": "tools_providers", "label": "סביבות דיגיטליות של ספקי תוכן" },
+      { "key": "tools_portal", "label": "אתר המקצוע (פורטל פדגוגי)" },
+      { "key": "tools_units", "label": "יחידות הוראה מתוקשבות" },
+      { "key": "tools_motnet", "label": "אתר מוטנ\"ט" },
+      { "key": "tools_moodle_moe", "label": "משימות אורייניות Moodle" },
+      { "key": "tools_district_site", "label": "אתר מו\"ט בהתיישבותי" },
+      { "key": "tools_petel", "label": "סביבת פטל וייצמן" },
+      { "key": "tools_mytestbox", "label": "My Test Box" },
+      { "key": "tools_lms", "label": "מרחב מלווה למידה" },
+      { "key": "tools_school_site", "label": "אתר ייעודי אישי / בית ספרי" },
+      { "key": "tools_other_flag", "label": "אחר" },
+      { "key": "tools_other_detail", "label": "פירוט אחר" }
+    ]
+  },
+  {
+    "id": 4,
+    "title": "ישיבות צוות",
+    "description": "קיום ישיבות צוות סדירות ופרטי המפגש.",
+    "fields": [
+      { "key": "meetings_held", "label": "האם מתקיימות ישיבות צוות סדירות?", "pattern": "B", "type": "yes-no" },
+      { "key": "meetings_day", "label": "יום הישיבות", "pattern": "A", "type": "text", "dependsOn": "meetings_held" },
+      { "key": "meetings_hours", "label": "בין השעות", "pattern": "A", "type": "text", "dependsOn": "meetings_held" }
+    ]
+  },
+  {
+    "id": 5,
+    "title": "פיתוח מקצועי",
+    "description": "השתלמויות שהתקיימו ונושאים מבוקשים.",
+    "fields": [
+      { "key": "pd_district_count", "label": "מורים שהשתתפו בהשתלמויות מחוז", "pattern": "A", "type": "text" },
+      { "key": "pd_national_count", "label": "מורים שהשתתפו בהשתלמויות מפמ\"ר", "pattern": "A", "type": "text" },
+      { "key": "pd_national_names", "label": "פירוט שמות השתלמויות ארציות", "pattern": "D", "type": "textarea" },
+      { "key": "pd_topics_requested", "label": "נושאי השתלמות מבוקשים", "pattern": "D", "type": "textarea" }
+    ]
+  },
+  {
+    "id": 6,
+    "title": "ארגון הלמידה",
+    "description": "שעות הוראה וגודל קבוצות לפי שכבה.",
+    "fields": [
+      { "key": "learning_hours_g7", "label": "שעות הוראה בשכבה ז'", "pattern": "A", "type": "text" },
+      { "key": "learning_hours_g8", "label": "שעות הוראה בשכבה ח'", "pattern": "A", "type": "text" },
+      { "key": "learning_hours_g9", "label": "שעות הוראה בשכבה ט'", "pattern": "A", "type": "text" },
+      { "key": "learning_group_size_g7", "label": "תלמידים בקבוצה - שכבה ז'", "pattern": "A", "type": "text" },
+      { "key": "learning_group_size_g8", "label": "תלמידים בקבוצה - שכבה ח'", "pattern": "A", "type": "text" },
+      { "key": "learning_group_size_g9", "label": "תלמידים בקבוצה - שכבה ט'", "pattern": "A", "type": "text" }
+    ]
+  },
+  {
+    "id": 7,
+    "title": "מעבדות ומרחבי למידה",
+    "description": "חדרי מעבדה, תדירות שימוש ובקרה.",
+    "fields": [
+      { "key": "labs_total_count", "label": "מספר חדרי מעבדות", "pattern": "A", "type": "number" },
+      { "key": "labs_hatav_count", "label": "מעבדות לחט\"ב", "pattern": "A", "type": "number" },
+      { "key": "labs_frequency_g7", "label": "תדירות שיעורי מעבדה - ז'", "pattern": "A", "type": "text" },
+      { "key": "labs_frequency_g8", "label": "תדירות שיעורי מעבדה - ח'", "pattern": "A", "type": "text" },
+      { "key": "labs_frequency_g9", "label": "תדירות שיעורי מעבדה - ט'", "pattern": "A", "type": "text" },
+      { "key": "labs_support", "label": "תומכ/ת מעבדה", "pattern": "B", "type": "text" },
+      { "key": "labs_audit", "label": "בקרה במעבדה", "pattern": "A", "type": "text" },
+      { "key": "has_extra_spaces", "label": "מרחבי למידה נוספים?", "pattern": "B", "type": "yes-no" }
+    ]
+  },
+  {
+    "id": 8,
+    "title": "מרחבי למידה נוספים",
+    "description": "מרחבים ייחודיים ואשכול פייס.",
+    "fields": [
+      { "key": "extra_spaces_types", "label": "אילו מרחבים", "pattern": "B", "type": "text" },
+      { "key": "has_face_cluster", "label": "אשכול פייס?", "pattern": "B", "type": "yes-no" },
+      { "key": "face_cluster_hatav", "label": "תלמידי חט\"ב באשכול?", "pattern": "B", "type": "yes-no" },
+      { "key": "research_g9_status", "label": "תהליך חקר בשכבת ט'", "pattern": "A", "type": "text" }
+    ]
+  },
+  {
+    "id": 9,
+    "title": "חקר, ירידים ותחרויות",
+    "description": "חקר מדעי, ירידים, יוזמות וכיתות מצוינות.",
+    "fields": [
+      { "key": "internal_fair", "label": "יריד בית ספרי", "pattern": "A", "type": "text" },
+      { "key": "district_fair_displayed", "label": "יריד מחוזי", "pattern": "B", "type": "text" },
+      { "key": "initiatives_past", "label": "יוזמות שהתקיימו", "pattern": "D", "type": "textarea" },
+      { "key": "initiatives_planned", "label": "יוזמות מתוכננות לתשפ\"ז", "pattern": "D", "type": "textarea" },
+      { "key": "initiatives_other", "label": "יוזמות אחרות", "pattern": "D", "type": "textarea" },
+      { "key": "excellence_classes", "label": "כיתות מצוינות בחט\"ב", "pattern": "D", "type": "text" }
+    ]
+  },
+  {
+    "id": 10,
+    "title": "מצוינות, חנ\"מ, תכ\"ע וסיום",
+    "description": "פעולות מצוינות, חינוך מיוחד, תוכניות עבודה והערות.",
+    "fields": [
+      { "key": "excellence_details", "label": "פירוט פעולות מצוינות", "pattern": "D", "type": "textarea" },
+      { "key": "has_special_ed", "label": "כיתות חינוך מיוחד?", "pattern": "B", "type": "yes-no" },
+      { "key": "special_ed_hours_g7", "label": "חנ\"מ - שעות שכבה ז'", "pattern": "C", "type": "text" },
+      { "key": "special_ed_hours_g8", "label": "חנ\"מ - שעות שכבה ח'", "pattern": "C", "type": "text" },
+      { "key": "special_ed_hours_g9", "label": "חנ\"מ - שעות שכבה ט'", "pattern": "C", "type": "text" },
+      { "key": "special_ed_science_bg_g7", "label": "רקע מדעי מורי חנ\"מ - ז'", "pattern": "C", "type": "text" },
+      { "key": "special_ed_science_bg_g8", "label": "רקע מדעי מורי חנ\"מ - ח'", "pattern": "C", "type": "text" },
+      { "key": "special_ed_science_bg_g9", "label": "רקע מדעי מורי חנ\"מ - ט'", "pattern": "C", "type": "text" },
+      { "key": "special_ed_coordinator_name", "label": "פרטי מורה חנ\"מ", "pattern": "A", "type": "text" },
+      { "key": "special_ed_coordinator_phone", "label": "טלפון מורה חנ\"מ", "pattern": "A", "type": "phone" },
+      { "key": "special_ed_coordinator_email", "label": "מייל מורה חנ\"מ", "pattern": "A", "type": "email" },
+      { "key": "special_ed_bg_details", "label": "פירוט רקע", "pattern": "D", "type": "textarea" },
+      { "key": "special_ed_in_lab_g7", "label": "חנ\"מ במעבדה - ז'", "pattern": "C", "type": "text" },
+      { "key": "special_ed_in_lab_g8", "label": "חנ\"מ במעבדה - ח'", "pattern": "C", "type": "text" },
+      { "key": "special_ed_in_lab_g9", "label": "חנ\"מ במעבדה - ט'", "pattern": "C", "type": "text" },
+      { "key": "special_ed_plan_file", "label": "תכ\"ע חנ\"מ", "pattern": "D", "type": "file" },
+      { "key": "work_plan_status", "label": "תכ\"ע תשפ\"ז?", "pattern": "A", "type": "text" },
+      { "key": "work_plan_file", "label": "תכ\"ע בית ספרית", "pattern": "D", "type": "file" },
+      { "key": "gefen_purchased", "label": "הדרכת גפ\"ן?", "pattern": "A", "type": "text" },
+      { "key": "support_request", "label": "רעיון/צורך", "pattern": "D", "type": "textarea" },
+      { "key": "general_notes", "label": "הערות", "pattern": "D", "type": "textarea" }
+    ]
+  }
+]
