@@ -494,16 +494,14 @@ function rerenderFieldCard(fieldKey) {
 
 function renderConfirmButtons(field) {
   return `
-    <div>
-      <p class="font-label-bold text-label-bold text-on-surface mb-md text-center">${state.strings.verification.stayedSameQuestion}</p>
-      <div class="flex flex-col sm:flex-row gap-md">
-        <button class="flex-1 h-[52px] bg-primary text-on-primary font-label-bold rounded-lg hover:bg-primary-container focus-ring" data-action="confirm-field" data-field-key="${field.key}">
-          ${state.strings.verification.confirmBtn}
-        </button>
-        <button class="flex-1 h-[52px] bg-transparent border-2 border-primary text-primary font-label-bold rounded-lg hover:bg-primary-fixed/20 focus-ring" data-action="edit-field" data-field-key="${field.key}">
-          ${state.strings.verification.editBtn}
-        </button>
-      </div>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-md">
+      <p class="font-caption text-caption text-tertiary inline-flex items-center gap-xs">
+        <span class="material-symbols-outlined text-[20px]">check_circle</span>
+        מאושר אוטומטית - הנתון נשאר אותו דבר
+      </p>
+      <button class="h-[44px] px-lg border-2 border-primary text-primary font-label-bold rounded-lg hover:bg-primary-fixed/20 focus-ring whitespace-nowrap" data-action="edit-field" data-field-key="${field.key}">
+        ✎ צריך לעדכן
+      </button>
     </div>`;
 }
 
