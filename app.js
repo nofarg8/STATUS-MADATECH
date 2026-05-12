@@ -22,10 +22,10 @@ const state = {
 };
 
 const jsonFiles = {
-  strings: "data/strings.he.json",
-  schools: "data/schools.json",
-  responses: "data/last_year_responses.json",
-  sections: "data/sections.json"
+  strings: "strings.he.json",
+  schools: "schools.json",
+  responses: "last_year_responses.json",
+  sections: "sections.json"
 };
 
 init();
@@ -89,7 +89,7 @@ function renderHeader() {
   if (!state.strings) return "";
   const brand = state.strings.branding;
   const hityashvutiLogo = "https://nofars.neocities.org/hityashvuti.png";
-  const scienceLogo = "assets/science-technology-logo.jpg";
+  const scienceLogo = "science-technology-logo.jpg";
   const selected = state.selectedSchool ? `
     <div class="hidden md:flex items-center gap-sm rounded-full bg-primary-fixed px-md py-xs text-on-primary-fixed font-caption text-caption">
       <span class="material-symbols-outlined text-[18px]">school</span>
@@ -127,7 +127,7 @@ function renderHeader() {
 function renderFooter() {
   const footer = state.strings.footer;
   const hityashvutiLogo = "https://nofars.neocities.org/hityashvuti.png";
-  const scienceLogo = "assets/science-technology-logo.jpg";
+  const scienceLogo = "science-technology-logo.jpg";
   return `
     <footer class="w-full py-xl px-xl border-t border-outline-variant/30 bg-surface-container-lowest mt-auto">
       <div class="max-w-container-max mx-auto flex flex-col sm:flex-row justify-center gap-lg items-center text-on-surface-variant font-caption text-caption">
