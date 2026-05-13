@@ -250,9 +250,6 @@ function renderOverview() {
         <section class="bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-xl soft-shadow">
           <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-lg">
             <div>
-              <span class="inline-flex items-center gap-xs px-md py-xs rounded-full bg-secondary-fixed text-on-secondary-fixed font-caption text-caption mb-md">
-                <span class="material-symbols-outlined text-[18px]">dataset</span>${t.sourceBadge}
-              </span>
               <h2 class="font-display-lg text-display-lg text-primary">${t.title}</h2>
               <p class="font-body-lg text-body-lg text-on-surface-variant max-w-[760px]">${t.subtitle}</p>
             </div>
