@@ -25,7 +25,7 @@
   {
     "id": 3,
     "title": "כלים דיגיטליים בהוראה",
-    "description": "מטריצת שימוש בכלים דיגיטליים.",
+    "description": "לכל כלי בחרו את היקף השימוש בצוות. ערכי השנה הקודמת מסומנים מראש.",
     "pattern": "C",
     "fields": [
       { "key": "tools_books_digital", "label": "ספרים דיגיטליים" },
@@ -56,11 +56,9 @@
   {
     "id": 5,
     "title": "פיתוח מקצועי",
-    "description": "השתלמויות שהתקיימו ונושאים מבוקשים.",
+    "description": "מורים המשתלמים השנה ונושאים מבוקשים.",
     "fields": [
-      { "key": "pd_district_count", "label": "מורים שהשתתפו בהשתלמויות מחוז", "pattern": "A", "type": "text" },
-      { "key": "pd_national_count", "label": "מורים שהשתתפו בהשתלמויות מפמ\"ר", "pattern": "A", "type": "text" },
-      { "key": "pd_national_names", "label": "פירוט שמות השתלמויות ארציות", "pattern": "D", "type": "textarea" },
+      { "key": "pd_teachers_attending_this_year", "label": "כמה מורים מהצוות משתלמים בשנת תשפ\"ז?", "pattern": "A", "type": "number" },
       { "key": "pd_topics_requested", "label": "נושאי השתלמות מבוקשים", "pattern": "D", "type": "textarea" }
     ]
   },
