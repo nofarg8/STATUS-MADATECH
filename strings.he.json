@@ -31,7 +31,19 @@
     "viewSummary": "צפייה בסיכום",
     "thanksTitle": "תודה! הטופס נשלח בהצלחה",
     "thanksSubtitle": "סטטוס מדע וטכנולוגיה תשפ\"ז של בית הספר עודכן בגיליון. ניתן לסגור את הלשונית.",
-    "thanksHomeBtn": "חזרה למסך הראשי"
+    "thanksHomeBtn": "חזרה למסך הראשי",
+    "downloadPdf": "📄 הורד סיכום כ-PDF",
+    "pdfPreparing": "מכין PDF…",
+    "pdfDocTitle": "סטטוס מדע וטכנולוגיה תשפ\"ז",
+    "pdfStatsTitle": "סיכום הנתונים",
+    "pdfSectionsTitle": "סטטוס הסקציות",
+    "pdfConfirmed": "אושר ללא שינוי",
+    "pdfUpdated": "עודכן",
+    "pdfSchool": "בית ספר",
+    "pdfSymbol": "סמל מוסד",
+    "pdfSubmittedAt": "תאריך שליחה",
+    "pdfConfirmedFields": "שדות שאושרו",
+    "pdfUpdatedFields": "שדות שעודכנו"
   },
   "wizard": {
     "title": "אימות ועדכון",
@@ -77,7 +89,13 @@
     "newQuestion": "שאלה חדשה לשנה זו",
     "matrixSame": "✓ הכל אותו דבר",
     "matrixPartial": "✎ צריך לעדכן פריט אחד",
-    "matrixFull": "✎ צריך לעדכן כמה פריטים"
+    "matrixFull": "✎ צריך לעדכן כמה פריטים",
+    "toolsIntro": "לכל כלי בחרו את היקף השימוש בצוות. הערכים מהשנה הקודמת מסומנים מראש — שנו רק מה שהשתנה.",
+    "toolNone": "לא משתמשים",
+    "toolLittle": "קצת",
+    "toolMedium": "בינוני",
+    "toolLot": "הרבה",
+    "toolChanged": "שונה"
   },
   "navigation": {
     "back": "→ הקודם",
