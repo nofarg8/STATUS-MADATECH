@@ -1116,37 +1116,31 @@ function waitForImages(root) {
 async function renderPdfWorker() {
   if (typeof window.html2pdf === "undefined") throw new Error("html2pdf לא נטען");
   const element = buildPdfSummaryElement();
-  // ממוקם בתוך החלון (כך ש-html2canvas מצליח לצלם) אך מאחורי האפליקציה כדי שלא יהבהב.
-  element.style.position = "fixed";
-  element.style.left = "0";
-  element.style.top = "0";
-  element.style.zIndex = "-1";
-  element.style.pointerEvents = "none";
-  document.body.appendChild(element);
+  // כיסוי לבן מלא-מסך *מעל* העמוד: התוכן גלוי וממוקם רגיל, כך ש-html2canvas מצלם אותו נכון.
+  const overlay = document.createElement("div");
+  overlay.setAttribute("dir", "rtl");
+  overlay.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#ffffff;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:20px 0;";
+  element.style.position = "static";
+  element.style.flex = "0 0 auto";
+  overlay.appendChild(element);
+  document.body.appendChild(overlay);
+  const cleanup = () => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); };
   try {
     if (document.fonts && document.fonts.ready) {
       try { await document.fonts.ready; } catch (e) {}
     }
     await waitForImages(element);
+    await new Promise((r) => window.setTimeout(r, 60));
     const worker = window.html2pdf().set({
       margin: [10, 10, 10, 10],
       filename: getPdfFileName(),
       image: { type: "jpeg", quality: 0.96 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 820,
-        width: 760
-      },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
     }).from(element);
-    return { worker, cleanup: () => element.remove() };
+    return { worker, cleanup };
   } catch (error) {
-    element.remove();
+    cleanup();
     throw error;
   }
 }
@@ -1160,6 +1154,7 @@ async function downloadSummaryPdf() {
     await worker.save();
     cleanup();
   } catch (error) {
+    console.error("PDF generation failed:", error);
     showToast(error.message || "יצירת ה-PDF נכשלה");
   } finally {
     state.pdfBusy = false;
