@@ -1,6 +1,6 @@
 const app = document.getElementById("app");
 const toast = document.getElementById("save-toast");
-const API_URL = "https://script.google.com/macros/s/AKfycbz7HzhsaGWkJXm89bgTr7I4H8260QQJOGSTSIM9rtp08RdJiq9mWpP-fmK4gQBQif8s/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwPZeQP9O7VoB8ifrWxBuySUOyD69Gaaf5GSMckhJQeDoerBBwSRrojvgd9f1toOgJA/exec";
 
 const state = {
   strings: null,
@@ -1100,22 +1100,48 @@ function buildPdfSummaryElement() {
   return wrap;
 }
 
+function waitForImages(root) {
+  const images = Array.prototype.slice.call(root.querySelectorAll("img"));
+  return Promise.all(images.map((img) => {
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+    return new Promise((resolve) => {
+      const done = () => resolve();
+      img.addEventListener("load", done, { once: true });
+      img.addEventListener("error", done, { once: true });
+      window.setTimeout(done, 4000);
+    });
+  }));
+}
+
 async function renderPdfWorker() {
   if (typeof window.html2pdf === "undefined") throw new Error("html2pdf לא נטען");
   const element = buildPdfSummaryElement();
+  // ממוקם בתוך החלון (כך ש-html2canvas מצליח לצלם) אך מאחורי האפליקציה כדי שלא יהבהב.
   element.style.position = "fixed";
-  element.style.left = "-10000px";
+  element.style.left = "0";
   element.style.top = "0";
+  element.style.zIndex = "-1";
+  element.style.pointerEvents = "none";
   document.body.appendChild(element);
   try {
     if (document.fonts && document.fonts.ready) {
       try { await document.fonts.ready; } catch (e) {}
     }
+    await waitForImages(element);
     const worker = window.html2pdf().set({
-      margin: [12, 12, 12, 12],
+      margin: [10, 10, 10, 10],
       filename: getPdfFileName(),
       image: { type: "jpeg", quality: 0.96 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 820,
+        width: 760
+      },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
     }).from(element);
     return { worker, cleanup: () => element.remove() };
