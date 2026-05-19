@@ -8,7 +8,9 @@ const state = {
   responses: [],
   sections: [],
   apiOnline: false,
+  debug: false,
   isSaving: false,
+  pdfBusy: false,
   justSubmitted: false,
   screen: "welcome",
   selectedSchoolId: null,
@@ -32,6 +34,7 @@ init();
 
 async function init() {
   try {
+    state.debug = new URLSearchParams(window.location.search).get("debug") === "1";
     const [strings, localSchools, responses, sections] = await Promise.all(
       Object.values(jsonFiles).map((url) => fetch(url).then((response) => {
         if (!response.ok) throw new Error(`Failed to load ${url}`);
@@ -62,6 +65,11 @@ async function init() {
 }
 
 async function loadSchoolsFromApi() {
+  if (state.debug) {
+    state.apiOnline = false;
+    console.info("Debug mode (?debug=1): using local JSON, API disabled");
+    return;
+  }
   try {
     const result = await apiGet({ action: "getSchools" });
     if (!result.ok) throw new Error(result.error || "getSchools failed");
@@ -95,7 +103,11 @@ function renderHeader() {
       <span class="material-symbols-outlined text-[18px]">school</span>
       <span>${escapeHtml(state.selectedSchool.name)} · ${escapeHtml(state.selectedSchool.id)}</span>
     </div>` : "";
-  const apiBadge = state.apiOnline ? "" : `
+  const apiBadge = state.debug ? `
+    <div class="flex items-center gap-xs rounded-full px-md py-xs font-caption text-caption bg-secondary-container text-on-secondary-container">
+      <span class="material-symbols-outlined text-[18px]">bug_report</span>
+      <span>מצב Debug — נתונים מקומיים</span>
+    </div>` : state.apiOnline ? "" : `
     <div class="flex items-center gap-xs rounded-full px-md py-xs font-caption text-caption bg-error-container text-on-error-container">
       <span class="material-symbols-outlined text-[18px]">cloud_off</span>
       <span>אין חיבור — שמירה לא תיקלט</span>
@@ -308,7 +320,10 @@ function renderSubmitted() {
               ${t.submittedAt}: ${escapeHtml(submittedAt)}
             </p>
           </section>
-          <nav class="flex justify-center">
+          <nav class="flex flex-col items-center gap-md">
+            <button class="w-full sm:w-auto min-h-[60px] px-2xl rounded-lg bg-tertiary text-on-tertiary font-label-bold text-body-lg flex items-center justify-center gap-sm soft-shadow focus-ring disabled:opacity-60 disabled:cursor-not-allowed" data-action="download-pdf" ${state.pdfBusy ? "disabled" : ""}>
+              ${state.pdfBusy ? `<span class="material-symbols-outlined animate-spin">progress_activity</span> ${escapeHtml(t.pdfPreparing)}` : escapeHtml(t.downloadPdf)}
+            </button>
             <button class="h-[52px] px-xl rounded-lg bg-primary text-on-primary font-label-bold focus-ring" data-action="go-welcome">${t.thanksHomeBtn}</button>
           </nav>
         </div>
@@ -391,7 +406,7 @@ function renderWizard() {
               <p class="font-caption text-caption text-tertiary mt-xs">${t.approveAllHelp}</p>
             </article>
 
-            ${section.pattern === "C" && state.sectionStatus[section.id] !== "expanded" ? renderMatrixCard(section) : section.fields.map(renderFieldCard).join("")}
+            ${section.pattern === "C" ? renderToolsMatrix(section) : section.fields.map(renderFieldCard).join("")}
 
             <p class="font-caption text-caption text-on-surface-variant">${t.sampleNotice}</p>
 
@@ -518,30 +533,99 @@ function renderEditControl(field, displayValue) {
     </div>`;
 }
 
-function renderMatrixCard(section) {
-  const visibleFields = section.fields.filter((field) => {
-    const value = state.selectedResponse[field.key];
-    return value !== null && value !== "" && value !== "אף אחד";
-  });
+const TOOL_OPTION_DEFS = [
+  { value: "לא משתמשים", stringKey: "toolNone" },
+  { value: "קצת", stringKey: "toolLittle" },
+  { value: "בינוני", stringKey: "toolMedium" },
+  { value: "הרבה", stringKey: "toolLot" }
+];
+
+const TOOL_LAST_YEAR_MAP = {
+  "חלק קטן": "קצת",
+  "רובם": "בינוני",
+  "כולם": "הרבה"
+};
+
+function mapLastYearTool(value) {
+  if (value === null || value === undefined || value === "") return null;
+  return TOOL_LAST_YEAR_MAP[String(value).trim()] || null;
+}
+
+function getToolSelection(key) {
+  const lastMapped = mapLastYearTool(state.selectedResponse ? state.selectedResponse[key] : null);
+  const effectiveLast = lastMapped || "לא משתמשים";
+  const hasDraft = Object.prototype.hasOwnProperty.call(state.fieldDrafts, key);
+  const selected = hasDraft ? state.fieldDrafts[key] : lastMapped;
+  const changed = state.fieldStatus[key] === "updated";
+  return { selected, lastMapped, effectiveLast, changed };
+}
+
+function renderToolsMatrix(section) {
+  const v = state.strings.verification;
+  const tools = section.fields.filter((field) => field.key !== "tools_other_detail");
+  const detailField = section.fields.find((field) => field.key === "tools_other_detail");
+
+  const rows = tools.map((field) => {
+    const { selected, changed } = getToolSelection(field.key);
+    const buttons = TOOL_OPTION_DEFS.map((opt) => {
+      const isOn = selected === opt.value;
+      const cls = isOn
+        ? "bg-primary text-on-primary border-primary"
+        : "bg-surface-container-lowest text-on-surface-variant border-outline-variant/60 hover:border-primary";
+      return `
+        <button type="button" role="radio" aria-checked="${isOn}"
+          class="tool-opt min-h-[44px] flex-1 min-w-[78px] px-sm rounded-lg border-2 font-label-bold text-caption transition-colors focus-ring ${cls}"
+          data-action="tool-select" data-field-key="${escapeAttr(field.key)}" data-value="${escapeAttr(opt.value)}">
+          ${escapeHtml(v[opt.stringKey])}
+        </button>`;
+    }).join("");
+    return `
+      <div class="tool-row flex flex-col sm:flex-row sm:items-center gap-sm py-md border-b border-outline-variant/30 last:border-b-0" data-tool-row="${escapeAttr(field.key)}">
+        <div class="sm:w-[40%] flex items-center gap-sm">
+          <span class="font-body-md text-body-md text-on-surface">${escapeHtml(field.label)}</span>
+          ${changed ? `<span class="px-sm py-[2px] bg-[#FFF3E0] text-[#E65100] rounded-full font-caption text-caption whitespace-nowrap">${escapeHtml(v.toolChanged)}</span>` : ""}
+        </div>
+        <div class="sm:flex-1 flex flex-wrap gap-xs" role="radiogroup" aria-label="${escapeAttr(field.label)}">
+          ${buttons}
+        </div>
+      </div>`;
+  }).join("");
 
   return `
-    <article class="bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-xl soft-shadow">
+    <article id="tools-matrix" class="bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-xl soft-shadow">
       <h3 class="font-title-sm text-title-sm text-on-surface mb-xs">${section.title}</h3>
-      <p class="font-caption text-caption text-on-surface-variant mb-lg">מציגים את הפריטים שבהם דווח ערך שאינו "אף אחד".</p>
-      <div class="bg-on-tertiary-container border border-dashed border-tertiary-container rounded-lg p-lg mb-lg">
-        <div class="flex flex-wrap gap-sm">
-          ${visibleFields.map((field) => `
-            <span class="px-md py-xs bg-surface-container-lowest border border-tertiary-container rounded-full font-caption text-caption text-tertiary">
-              ${escapeHtml(field.label)} - ${escapeHtml(formatValue(state.selectedResponse[field.key]))}
-            </span>`).join("")}
-        </div>
+      <p class="font-caption text-caption text-on-surface-variant mb-lg">${v.toolsIntro}</p>
+      <div class="flex flex-col">
+        ${rows}
       </div>
-      <div class="space-y-sm">
-        <button class="w-full h-[52px] bg-primary text-on-primary font-label-bold rounded-lg focus-ring" data-action="approve-section">${state.strings.verification.matrixSame}</button>
-        <button class="w-full min-h-[44px] bg-transparent border border-primary text-primary font-label-bold rounded-lg focus-ring" data-action="matrix-partial">${state.strings.verification.matrixPartial}</button>
-        <button class="w-full min-h-[44px] bg-surface-container text-on-surface-variant font-label-bold rounded-lg focus-ring" data-action="matrix-full">${state.strings.verification.matrixFull}</button>
-      </div>
+      ${detailField ? `<div class="mt-xl">${renderFieldCard(detailField)}</div>` : ""}
     </article>`;
+}
+
+function rerenderToolsMatrix() {
+  const section = state.sections[state.currentSectionIndex];
+  if (!section || section.pattern !== "C") { render(); return; }
+  const existing = document.getElementById("tools-matrix");
+  if (!existing) { render(); return; }
+  const tmp = document.createElement("div");
+  tmp.innerHTML = renderToolsMatrix(section).trim();
+  const fresh = tmp.firstElementChild;
+  existing.replaceWith(fresh);
+  fresh.querySelectorAll("[data-action]").forEach((el) => el.addEventListener("click", handleAction));
+  const input = fresh.querySelector("[data-draft-field]");
+  if (input) {
+    input.addEventListener("input", (event) => {
+      state.fieldDrafts[input.dataset.draftField] = event.target.value;
+    });
+  }
+}
+
+function selectTool(key, value) {
+  const { effectiveLast } = getToolSelection(key);
+  state.fieldDrafts[key] = value;
+  state.fieldStatus[key] = value === effectiveLast ? "confirmed" : "updated";
+  rerenderToolsMatrix();
+  saveDraftForCurrentSection(false);
 }
 
 function renderSummary() {
@@ -693,8 +777,8 @@ function handleAction(event) {
     "save-field": () => saveFieldUpdate(button.dataset.fieldKey),
     "approve-section": approveSection,
     "save-draft": () => saveDraftForCurrentSection(),
-    "matrix-partial": () => markCurrentMatrix("editing"),
-    "matrix-full": () => markCurrentMatrix("editing"),
+    "tool-select": () => selectTool(button.dataset.fieldKey, button.dataset.value),
+    "download-pdf": () => downloadSummaryPdf(),
     "submit-static": () => submitFinal()
   };
 
@@ -784,13 +868,6 @@ function approveSection() {
     showToast(state.strings.wizard.allApproved);
     nextSection();
   });
-}
-
-function markCurrentMatrix(status) {
-  const section = state.sections[state.currentSectionIndex];
-  state.sectionStatus[section.id] = status === "editing" ? "expanded" : "approved";
-  render();
-  scrollToTop();
 }
 
 async function nextSection(shouldRender = true) {
@@ -944,8 +1021,143 @@ async function submitFinal() {
     state.screen = "submitted";
     render();
     scrollToTop();
+    autoSavePdfToDrive();
   } catch (error) {
     showToast(error.message || "שליחה נכשלה");
+  }
+}
+
+function getSummaryStats() {
+  const totalFields = state.sections.reduce((sum, section) => sum + section.fields.length, 0);
+  const updated = getUpdatedFields().length;
+  return { totalFields, updated, confirmed: totalFields - updated, sections: state.sections.length };
+}
+
+function sanitizeFilename(name) {
+  return String(name).replace(/["]/g, "״").replace(/[\/\\:*?<>|]/g, "-").replace(/\s+/g, " ").trim();
+}
+
+function getPdfFileName() {
+  const school = state.selectedSchool || {};
+  const name = school.name || state.selectedResponse?.school_name || "";
+  const id = school.id || state.selectedResponse?.school_id || state.selectedSchoolId || "";
+  return sanitizeFilename(`סטטוס מוט תשפ"ז - ${name} - ${id}`) + ".pdf";
+}
+
+function buildPdfSummaryElement() {
+  const t = state.strings.submitted;
+  const stats = getSummaryStats();
+  const school = state.selectedSchool || {};
+  const name = school.name || state.selectedResponse?.school_name || "";
+  const id = school.id || state.selectedResponse?.school_id || state.selectedSchoolId || "";
+  const submittedAt = formatSubmittedDate(state.selectedResponse?._submittedAt || state.selectedResponse?.submittedAt);
+
+  const sectionRows = state.sections.map((section) => {
+    const changed = section.fields.some((field) => state.fieldStatus[field.key] === "updated");
+    const statusLabel = changed ? t.pdfUpdated : t.pdfConfirmed;
+    const color = changed ? "#E65100" : "#14671f";
+    return `<tr>
+      <td style="padding:7px 10px;border-bottom:1px solid #e0e3e6;">${section.id}. ${escapeHtml(section.title)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e0e3e6;color:${color};font-weight:700;white-space:nowrap;">${escapeHtml(statusLabel)}</td>
+    </tr>`;
+  }).join("");
+
+  const wrap = document.createElement("div");
+  wrap.setAttribute("dir", "rtl");
+  wrap.style.cssText = "font-family:'Assistant',sans-serif;width:760px;padding:36px;background:#ffffff;color:#191c1e;box-sizing:border-box;";
+  wrap.innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;border-bottom:3px solid #005c9b;padding-bottom:18px;margin-bottom:24px;">
+      <img src="science-technology-logo.jpg" style="height:64px;width:64px;border-radius:50%;object-fit:cover;" />
+      <div>
+        <div style="font-size:24px;font-weight:700;color:#005c9b;">${escapeHtml(t.pdfDocTitle)}</div>
+        <div style="font-size:15px;color:#414750;">המינהל לחינוך התיישבותי פנימייתי ועליית הנוער</div>
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:16px;">
+      <tr><td style="padding:5px 0;color:#414750;width:140px;">${escapeHtml(t.pdfSchool)}</td><td style="padding:5px 0;font-weight:700;">${escapeHtml(name)}</td></tr>
+      <tr><td style="padding:5px 0;color:#414750;">${escapeHtml(t.pdfSymbol)}</td><td style="padding:5px 0;font-weight:700;">${escapeHtml(id)}</td></tr>
+      <tr><td style="padding:5px 0;color:#414750;">${escapeHtml(t.pdfSubmittedAt)}</td><td style="padding:5px 0;font-weight:700;">${escapeHtml(submittedAt)}</td></tr>
+    </table>
+    <div style="font-size:18px;font-weight:700;color:#005c9b;margin-bottom:12px;">${escapeHtml(t.pdfStatsTitle)}</div>
+    <div style="display:flex;gap:14px;margin-bottom:28px;">
+      <div style="flex:1;border:1px solid #c1c7d2;border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:30px;font-weight:700;color:#14671f;">${stats.confirmed}</div>
+        <div style="font-size:14px;color:#414750;">${escapeHtml(t.pdfConfirmedFields)}</div>
+      </div>
+      <div style="flex:1;border:1px solid #c1c7d2;border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:30px;font-weight:700;color:#E65100;">${stats.updated}</div>
+        <div style="font-size:14px;color:#414750;">${escapeHtml(t.pdfUpdatedFields)}</div>
+      </div>
+      <div style="flex:1;border:1px solid #c1c7d2;border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:30px;font-weight:700;color:#005c9b;">${stats.sections}</div>
+        <div style="font-size:14px;color:#414750;">${escapeHtml(state.strings.summary.sectionsDone)}</div>
+      </div>
+    </div>
+    <div style="font-size:18px;font-weight:700;color:#005c9b;margin-bottom:12px;">${escapeHtml(t.pdfSectionsTitle)}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:15px;border:1px solid #e0e3e6;border-radius:8px;overflow:hidden;">
+      ${sectionRows}
+    </table>`;
+  return wrap;
+}
+
+async function renderPdfWorker() {
+  if (typeof window.html2pdf === "undefined") throw new Error("html2pdf לא נטען");
+  const element = buildPdfSummaryElement();
+  element.style.position = "fixed";
+  element.style.left = "-10000px";
+  element.style.top = "0";
+  document.body.appendChild(element);
+  try {
+    if (document.fonts && document.fonts.ready) {
+      try { await document.fonts.ready; } catch (e) {}
+    }
+    const worker = window.html2pdf().set({
+      margin: [12, 12, 12, 12],
+      filename: getPdfFileName(),
+      image: { type: "jpeg", quality: 0.96 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+    }).from(element);
+    return { worker, cleanup: () => element.remove() };
+  } catch (error) {
+    element.remove();
+    throw error;
+  }
+}
+
+async function downloadSummaryPdf() {
+  if (state.pdfBusy) return;
+  state.pdfBusy = true;
+  render();
+  try {
+    const { worker, cleanup } = await renderPdfWorker();
+    await worker.save();
+    cleanup();
+  } catch (error) {
+    showToast(error.message || "יצירת ה-PDF נכשלה");
+  } finally {
+    state.pdfBusy = false;
+    render();
+  }
+}
+
+async function autoSavePdfToDrive() {
+  if (!state.apiOnline) return;
+  try {
+    const { worker, cleanup } = await renderPdfWorker();
+    const dataUri = await worker.outputPdf("datauristring");
+    cleanup();
+    const base64 = String(dataUri).split(",")[1] || "";
+    if (!base64) return;
+    const school = state.selectedSchool || {};
+    await apiPost({
+      action: "savePdfSummary",
+      schoolId: state.selectedSchoolId,
+      schoolName: school.name || state.selectedResponse?.school_name || "",
+      pdfBase64: base64
+    });
+  } catch (error) {
+    console.warn("autoSavePdfToDrive failed (non-blocking):", error);
   }
 }
 
