@@ -2,7 +2,7 @@ const app = document.getElementById("app");
 const toast = document.getElementById("save-toast");
 const API_URL = "https://script.google.com/macros/s/AKfycbxaZ8PL7MBFxZdqH6jbdHuly5k9_NtxTkCRGTZ5mKYHE-6H2uy4De4JsUfopdsMrL9c/exec";
 // גרסה למניעת cache — מצמיד לכתובת קבצי הנתונים. לעדכון: שנו כאן וגם ב-index.html.
-const APP_VERSION = "20260524a";
+const APP_VERSION = "20260524b";
 
 const state = {
   strings: null,
@@ -182,10 +182,9 @@ function renderWelcome() {
 
         <div class="space-y-sm max-w-[820px]">
           <h2 class="font-display-lg text-display-lg text-primary">${t.headline}</h2>
-          <p class="font-body-lg text-body-lg text-on-surface-variant">${t.subtitle}</p>
           <p class="inline-flex items-center gap-xs mt-md px-md py-sm rounded-lg bg-on-tertiary-container text-tertiary font-label-bold text-label-bold">
             <span class="material-symbols-outlined text-[20px]">verified</span>
-            ${t.defaultApprovalNotice}
+            ${t.subtitle}
           </p>
           ${state.apiOnline ? "" : `<div class="flex justify-center mt-md">${renderConnectionBadge()}</div>`}
         </div>
