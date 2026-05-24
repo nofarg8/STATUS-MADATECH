@@ -1,6 +1,6 @@
 const app = document.getElementById("app");
 const toast = document.getElementById("save-toast");
-const API_URL = "https://script.google.com/macros/s/AKfycbwPZeQP9O7VoB8ifrWxBuySUOyD69Gaaf5GSMckhJQeDoerBBwSRrojvgd9f1toOgJA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxaZ8PL7MBFxZdqH6jbdHuly5k9_NtxTkCRGTZ5mKYHE-6H2uy4De4JsUfopdsMrL9c/exec";
 
 const state = {
   strings: null,
@@ -11,6 +11,9 @@ const state = {
   isSaving: false,
   pdfBusy: false,
   justSubmitted: false,
+  coordinatorEmail: "",
+  authError: false,
+  authChecking: false,
   screen: "welcome",
   selectedSchoolId: null,
   selectedSchool: null,
@@ -77,6 +80,7 @@ async function loadSchoolsFromApi() {
 function render() {
   const screens = {
     welcome: renderWelcome,
+    auth: renderAuth,
     overview: renderOverview,
     submitted: renderSubmitted,
     wizard: renderWizard,
@@ -233,6 +237,44 @@ function renderSchoolOption(school) {
         <span class="block font-caption text-caption text-on-surface-variant">${escapeHtml(school.id)}</span>
       </span>
     </button>`;
+}
+
+function renderAuth() {
+  const t = state.strings.auth;
+  const school = state.selectedSchool || {};
+  const waText = encodeURIComponent(`שלום נופר, אני רכז/ת ב${school.name || ""} (סמל ${school.id || ""}) והאימות לא עבר.`);
+  const waUrl = `https://wa.me/972506934423?text=${waText}`;
+  return `
+    <main class="screen flex-grow flex flex-col items-center justify-center px-lg py-4xl hero-gradient">
+      <div class="max-w-[560px] w-full bg-surface-container-lowest p-xl rounded-xl soft-shadow border border-outline-variant/30 text-right space-y-lg">
+        <div class="space-y-xs">
+          <h2 class="font-display-lg text-display-lg text-primary">${t.title}</h2>
+          <p class="font-body-md text-body-md text-on-surface-variant">${t.subtitle}</p>
+          <p class="inline-flex items-center gap-xs mt-sm px-md py-xs bg-primary-fixed text-on-primary-fixed rounded-full font-caption text-caption">
+            <span class="material-symbols-outlined text-[18px]">school</span>
+            ${escapeHtml(school.name || "")} · ${escapeHtml(school.id || "")}
+          </p>
+        </div>
+        <div class="space-y-sm">
+          <label class="font-label-bold text-label-bold text-on-surface block px-xs" for="coordinator-email">${t.emailLabel}</label>
+          <input class="w-full h-[52px] px-lg bg-surface-container-low border border-outline rounded-lg font-body-md focus-ring" id="coordinator-email" type="email" inputmode="email" placeholder="${t.emailPlaceholder}" value="${escapeAttr(state.coordinatorEmail)}" autocomplete="email" />
+        </div>
+        ${state.authError ? `
+          <div class="rounded-lg bg-error-container text-on-error-container p-lg space-y-md">
+            <p class="font-label-bold text-label-bold">${t.failTitle}</p>
+            <p class="font-body-md text-body-md">${t.failBody}</p>
+            <a href="${waUrl}" target="_blank" rel="noopener" class="w-full min-h-[52px] flex items-center justify-center gap-sm bg-[#25D366] text-white font-label-bold rounded-lg focus-ring">
+              <span class="material-symbols-outlined">chat</span>${t.whatsappBtn}
+            </a>
+          </div>` : ""}
+        <div class="flex flex-col sm:flex-row gap-md justify-between">
+          <button class="h-[52px] px-xl rounded-lg border border-primary text-primary font-label-bold focus-ring" data-action="go-welcome">${t.backBtn}</button>
+          <button class="h-[52px] px-xl rounded-lg bg-primary text-on-primary font-label-bold hover:bg-primary-container focus-ring disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-sm" data-action="verify-coordinator" ${state.authChecking ? "disabled" : ""}>
+            ${state.authChecking ? `<span class="material-symbols-outlined animate-spin">progress_activity</span> ${t.checking}` : t.verifyBtn}
+          </button>
+        </div>
+      </div>
+    </main>`;
 }
 
 function renderOverview() {
@@ -830,6 +872,16 @@ function bindEvents() {
     });
   }
 
+  const emailInput = document.getElementById("coordinator-email");
+  if (emailInput) {
+    emailInput.addEventListener("input", (event) => {
+      state.coordinatorEmail = event.target.value;
+    });
+    emailInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") { event.preventDefault(); verifyCoordinatorEmail(); }
+    });
+  }
+
   document.querySelectorAll("[data-draft-field]").forEach((element) => {
     bindDraftField(element);
   });
@@ -866,7 +918,8 @@ function handleAction(event) {
   const actions = {
     "go-welcome": () => safeNavigate(() => goTo("welcome")),
     "select-school": () => selectSchool(button.dataset.schoolId),
-    "start-overview": () => goTo("overview"),
+    "start-overview": () => startCoordinatorFlow(),
+    "verify-coordinator": () => verifyCoordinatorEmail(),
     "start-wizard": () => safeNavigate(() => goTo("wizard")),
     "go-summary": () => safeNavigate(() => goTo("summary")),
     "open-correction": () => {
@@ -909,8 +962,43 @@ function goTo(screen) {
     state.selectedSchool = null;
     state.selectedResponse = null;
     state.search = "";
+    state.coordinatorEmail = "";
+    state.authError = false;
   }
   render();
+}
+
+function startCoordinatorFlow() {
+  if (!state.apiOnline) { goTo("overview"); return; }
+  state.authError = false;
+  state.authChecking = false;
+  goTo("auth");
+}
+
+async function verifyCoordinatorEmail() {
+  if (state.authChecking) return;
+  const email = (state.coordinatorEmail || "").trim();
+  if (!email) { state.authError = true; render(); return; }
+  if (!state.apiOnline) { goTo("overview"); return; }
+
+  state.authChecking = true;
+  state.authError = false;
+  render();
+  try {
+    const result = await apiGet({ action: "verifyCoordinator", schoolId: state.selectedSchoolId, email });
+    state.authChecking = false;
+    if (result && result.verified) {
+      state.authError = false;
+      goTo("overview");
+    } else {
+      state.authError = true;
+      render();
+    }
+  } catch (error) {
+    state.authChecking = false;
+    state.authError = true;
+    render();
+  }
 }
 
 function flashPendingEditField() {
