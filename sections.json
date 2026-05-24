@@ -79,9 +79,9 @@
     "title": "ארגון הלמידה",
     "description": "שעות הוראה וכיתות לפי שכבה.",
     "fields": [
-      { "key": "learning_hours_g7", "label": "שעות הוראה בשבוע לתלמיד/ה - שכבה ז'", "requiredHint": "נדרש: 4+1 (כולל שעת תגבור — ישראל ריאלית)", "pattern": "A", "type": "text" },
-      { "key": "learning_hours_g8", "label": "שעות הוראה בשבוע לתלמיד/ה - שכבה ח'", "requiredHint": "נדרש: 5+1 (כולל שעת תגבור — ישראל ריאלית)", "pattern": "A", "type": "text" },
-      { "key": "learning_hours_g9", "label": "שעות הוראה בשבוע לתלמיד/ה - שכבה ט'", "requiredHint": "נדרש: 5", "pattern": "A", "type": "text" },
+      { "key": "learning_hours_g7", "label": "שעות הוראה בשבוע לתלמיד/ה - שכבה ז'", "requiredHint": "נדרש: 4+1 (כולל שעת תגבור — ישראל ריאלית)", "pattern": "A", "type": "number", "enforceNumber": true },
+      { "key": "learning_hours_g8", "label": "שעות הוראה בשבוע לתלמיד/ה - שכבה ח'", "requiredHint": "נדרש: 5+1 (כולל שעת תגבור — ישראל ריאלית)", "pattern": "A", "type": "number", "enforceNumber": true },
+      { "key": "learning_hours_g9", "label": "שעות הוראה בשבוע לתלמיד/ה - שכבה ט'", "requiredHint": "נדרש: 5", "pattern": "A", "type": "number", "enforceNumber": true },
       {
         "key": "classes_table",
         "label": "כיתות לפי שכבה",

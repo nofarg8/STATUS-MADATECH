@@ -577,6 +577,10 @@ function renderEditControl(field, displayValue) {
         <option value="" ${draft === "" ? "selected" : ""}>בחרו…</option>
         ${opts.map((opt) => `<option value="${escapeAttr(opt)}" ${String(draft) === String(opt) ? "selected" : ""}>${escapeHtml(opt)}</option>`).join("")}
       </select>`;
+  } else if (field.enforceNumber) {
+    control = `
+      <input class="w-full h-[52px] px-lg bg-[#FFF3E0] border border-[#E65100] rounded-lg font-body-md focus-ring" type="number" inputmode="numeric" min="0" step="1" value="${escapeAttr(draft)}" data-draft-field="${field.key}" placeholder="הקלידו מספר בלבד — למשל 3, 4, 5" />
+      <p class="font-caption text-caption text-on-surface-variant px-xs">יש להזין מספר בלבד (למשל 3, 4, 5).</p>`;
   } else {
     control = field.type === "textarea"
       ? `<textarea class="w-full min-h-[120px] p-lg bg-[#FFF3E0] border border-[#E65100] rounded-lg font-body-md focus-ring" data-draft-field="${field.key}">${escapeHtml(draft)}</textarea>`
@@ -1056,10 +1060,29 @@ function setFieldStatus(key, status) {
 }
 
 async function saveFieldUpdate(key) {
+  const section = state.sections[state.currentSectionIndex];
+  const field = section && section.fields.find((f) => f.key === key);
+  if (field && field.enforceNumber) {
+    const v = String(state.fieldDrafts[key] == null ? "" : state.fieldDrafts[key]).trim();
+    if (!/^\d+(\.\d+)?$/.test(v)) {
+      showToast("יש להזין מספר בלבד (למשל 3, 4, 5)");
+      flashCard(key);
+      return;
+    }
+  }
   state.fieldStatus[key] = "updated";
   rerenderFieldCard(key);
   showToast(state.strings.saveIndicator.savedNow);
   saveDraftForCurrentSection(false);
+}
+
+function flashCard(key) {
+  const card = document.querySelector(`.field-card[data-field-key="${CSS.escape(key)}"]`);
+  if (!card) return;
+  card.classList.remove("flash-warn");
+  void card.offsetWidth;
+  card.classList.add("flash-warn");
+  window.setTimeout(() => card.classList.remove("flash-warn"), 1600);
 }
 
 function approveSection() {
@@ -1275,6 +1298,70 @@ function getPdfFileName() {
   return sanitizeFilename(`סטטוס מוט תשפ"ז - ${name} - ${id}`) + ".pdf";
 }
 
+function pdfGradeLabel(g) {
+  return g === "g7" ? "ז'" : g === "g8" ? "ח'" : "ט'";
+}
+
+function pdfDetailRow(label, value, changed) {
+  const val = escapeHtml(formatValue(value));
+  const tag = changed ? '<span style="color:#E65100;font-weight:700;"> ✎ עודכן</span>' : "";
+  return `<tr>
+    <td style="padding:5px 10px;border-bottom:1px solid #eef0f3;width:55%;color:#414750;">${escapeHtml(label)}${tag}</td>
+    <td style="padding:5px 10px;border-bottom:1px solid #eef0f3;font-weight:600;color:${changed ? "#E65100" : "#191c1e"};">${val}</td>
+  </tr>`;
+}
+
+function buildPdfDetailHtml() {
+  const changed = getUpdatedFields();
+  const changesHtml = changed.length ? `
+    <div style="font-size:18px;font-weight:700;color:#E65100;margin:26px 0 10px;">שדות שעודכנו (${changed.length})</div>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;border:1px solid #f0c9a8;">
+      <tr style="background:#FFF3E0;">
+        <th style="text-align:right;padding:7px 10px;border-bottom:1px solid #f0c9a8;">שדה</th>
+        <th style="text-align:right;padding:7px 10px;border-bottom:1px solid #f0c9a8;width:28%;">ערך קודם</th>
+        <th style="text-align:right;padding:7px 10px;border-bottom:1px solid #f0c9a8;width:28%;">ערך חדש</th>
+      </tr>
+      ${changed.map((c) => `<tr>
+        <td style="padding:6px 10px;border-bottom:1px solid #f6e0cd;">${escapeHtml(c.field.label)}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f6e0cd;color:#717781;">${escapeHtml(c.previousValue)}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f6e0cd;color:#E65100;font-weight:700;">${escapeHtml(c.newValue)}</td>
+      </tr>`).join("")}
+    </table>` : '<div style="margin:26px 0 10px;font-size:15px;color:#14671f;">לא בוצעו עדכונים — כל הנתונים אושרו כפי שהיו בשנה הקודמת.</div>';
+
+  const detailHtml = state.sections.map((section) => {
+    const rows = [];
+    section.fields.forEach((field) => {
+      if (field.type === "grade-table") {
+        (field.rows || []).forEach((row) => {
+          ["g7", "g8", "g9"].forEach((g) => {
+            const key = row.keys && row.keys[g];
+            if (!key) return;
+            rows.push(pdfDetailRow(`${field.label} · ${row.label} (${pdfGradeLabel(g)})`, subFieldValue(key), state.fieldStatus[key] === "updated"));
+          });
+        });
+      } else if (field.type === "checkbox-group") {
+        (field.options || []).forEach((opt) => {
+          rows.push(pdfDetailRow(`${field.label} · ${opt.label}`, subFieldValue(opt.key) || "—", state.fieldStatus[opt.key] === "updated"));
+          if (opt.detailKey && subFieldValue(opt.detailKey)) {
+            rows.push(pdfDetailRow(`${field.label} · ${opt.detailLabel || opt.label}`, subFieldValue(opt.detailKey), state.fieldStatus[opt.detailKey] === "updated"));
+          }
+        });
+      } else {
+        const upd = state.fieldStatus[field.key] === "updated";
+        const v = upd ? state.fieldDrafts[field.key] : (state.selectedResponse ? state.selectedResponse[field.key] : null);
+        rows.push(pdfDetailRow(field.label, v, upd));
+      }
+    });
+    return `
+      <div style="font-size:15px;font-weight:700;color:#005c9b;margin:18px 0 6px;">${section.id}. ${escapeHtml(section.title)}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13.5px;border:1px solid #e0e3e6;">
+        ${rows.join("")}
+      </table>`;
+  }).join("");
+
+  return changesHtml + '<div style="font-size:18px;font-weight:700;color:#005c9b;margin:28px 0 8px;">פירוט מלא לפי חלקים</div>' + detailHtml;
+}
+
 function buildPdfSummaryElement() {
   const t = state.strings.submitted;
   const stats = getSummaryStats();
@@ -1282,16 +1369,6 @@ function buildPdfSummaryElement() {
   const name = school.name || state.selectedResponse?.school_name || "";
   const id = school.id || state.selectedResponse?.school_id || state.selectedSchoolId || "";
   const submittedAt = formatSubmittedDate(state.selectedResponse?._submittedAt || state.selectedResponse?.submittedAt);
-
-  const sectionRows = state.sections.map((section) => {
-    const changed = section.fields.some((field) => state.fieldStatus[field.key] === "updated");
-    const statusLabel = changed ? t.pdfUpdated : t.pdfConfirmed;
-    const color = changed ? "#E65100" : "#14671f";
-    return `<tr>
-      <td style="padding:7px 10px;border-bottom:1px solid #e0e3e6;">${section.id}. ${escapeHtml(section.title)}</td>
-      <td style="padding:7px 10px;border-bottom:1px solid #e0e3e6;color:${color};font-weight:700;white-space:nowrap;">${escapeHtml(statusLabel)}</td>
-    </tr>`;
-  }).join("");
 
   const wrap = document.createElement("div");
   wrap.setAttribute("dir", "rtl");
@@ -1324,10 +1401,7 @@ function buildPdfSummaryElement() {
         <div style="font-size:14px;color:#414750;">${escapeHtml(state.strings.summary.sectionsDone)}</div>
       </div>
     </div>
-    <div style="font-size:18px;font-weight:700;color:#005c9b;margin-bottom:12px;">${escapeHtml(t.pdfSectionsTitle)}</div>
-    <table style="width:100%;border-collapse:collapse;font-size:15px;border:1px solid #e0e3e6;border-radius:8px;overflow:hidden;">
-      ${sectionRows}
-    </table>`;
+    ${buildPdfDetailHtml()}`;
   return wrap;
 }
 
@@ -1381,6 +1455,8 @@ async function renderPdfWorker() {
     await new Promise((r) => window.setTimeout(r, 150));
 
     const target = doc.body.firstElementChild;
+    // התאמת גובה ה-iframe לכל התוכן (ה-PDF כעת ארוך/רב-עמודי) כדי ש-html2canvas יצלם הכל.
+    try { iframe.style.height = Math.max(1400, doc.body.scrollHeight + 40) + "px"; } catch (e) {}
     const worker = window.html2pdf().set({
       margin: [10, 10, 10, 10],
       filename: getPdfFileName(),
