@@ -1,6 +1,8 @@
 const app = document.getElementById("app");
 const toast = document.getElementById("save-toast");
 const API_URL = "https://script.google.com/macros/s/AKfycbxaZ8PL7MBFxZdqH6jbdHuly5k9_NtxTkCRGTZ5mKYHE-6H2uy4De4JsUfopdsMrL9c/exec";
+// גרסה למניעת cache — מצמיד לכתובת קבצי הנתונים. לעדכון: שנו כאן וגם ב-index.html.
+const APP_VERSION = "20260524a";
 
 const state = {
   strings: null,
@@ -37,7 +39,7 @@ init();
 async function init() {
   try {
     const [strings, localSchools, responses, sections] = await Promise.all(
-      Object.values(jsonFiles).map((url) => fetch(url).then((response) => {
+      Object.values(jsonFiles).map((url) => fetch(`${url}?v=${APP_VERSION}`).then((response) => {
         if (!response.ok) throw new Error(`Failed to load ${url}`);
         return response.json();
       }))
