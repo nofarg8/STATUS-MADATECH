@@ -8,7 +8,6 @@ const state = {
   responses: [],
   sections: [],
   apiOnline: false,
-  debug: false,
   isSaving: false,
   pdfBusy: false,
   justSubmitted: false,
@@ -34,7 +33,6 @@ init();
 
 async function init() {
   try {
-    state.debug = new URLSearchParams(window.location.search).get("debug") === "1";
     const [strings, localSchools, responses, sections] = await Promise.all(
       Object.values(jsonFiles).map((url) => fetch(url).then((response) => {
         if (!response.ok) throw new Error(`Failed to load ${url}`);
@@ -65,11 +63,6 @@ async function init() {
 }
 
 async function loadSchoolsFromApi() {
-  if (state.debug) {
-    state.apiOnline = false;
-    console.info("Debug mode (?debug=1): using local JSON, API disabled");
-    return;
-  }
   try {
     const result = await apiGet({ action: "getSchools" });
     if (!result.ok) throw new Error(result.error || "getSchools failed");
@@ -103,11 +96,7 @@ function renderHeader() {
       <span class="material-symbols-outlined text-[18px]">school</span>
       <span>${escapeHtml(state.selectedSchool.name)} · ${escapeHtml(state.selectedSchool.id)}</span>
     </div>` : "";
-  const apiBadge = state.debug ? `
-    <div class="flex items-center gap-xs rounded-full px-md py-xs font-caption text-caption bg-secondary-container text-on-secondary-container">
-      <span class="material-symbols-outlined text-[18px]">bug_report</span>
-      <span>מצב Debug — נתונים מקומיים</span>
-    </div>` : state.apiOnline ? "" : `
+  const apiBadge = state.apiOnline ? "" : `
     <div class="flex items-center gap-xs rounded-full px-md py-xs font-caption text-caption bg-error-container text-on-error-container">
       <span class="material-symbols-outlined text-[18px]">cloud_off</span>
       <span>אין חיבור — שמירה לא תיקלט</span>
@@ -351,7 +340,7 @@ function renderSubmitted() {
 }
 
 function renderOverviewSection(section, response) {
-  const fields = section.fields.slice(0, 4);
+  const fields = section.fields.filter((f) => f.type !== "grade-table" && f.type !== "checkbox-group").slice(0, 4);
   return `
     <article class="bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-xl soft-shadow">
       <h3 class="font-title-sm text-title-sm text-primary mb-xs">${section.title}</h3>
@@ -431,7 +420,7 @@ function renderSectionRail() {
       <div class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-1 gap-xs">
         ${state.sections.map((section, index) => {
           const active = index === state.currentSectionIndex;
-          const hasUpdate = section.fields.some((field) => state.fieldStatus[field.key] === "updated");
+          const hasUpdate = sectionHasUpdate(section);
           const statusText = hasUpdate ? "עודכן" : "אושר כברירת מחדל";
           return `
             <button class="min-h-[44px] rounded-lg px-md py-sm text-right focus-ring ${active ? "bg-primary text-on-primary" : "hover:bg-primary-fixed/40"}"
@@ -445,6 +434,8 @@ function renderSectionRail() {
 }
 
 function renderFieldCard(field) {
+  if (field.type === "grade-table") return renderGradeTable(field);
+  if (field.type === "checkbox-group") return renderCheckboxGroup(field);
   const status = state.fieldStatus[field.key] || "idle";
   const value = state.selectedResponse[field.key];
   const displayValue = formatValue(value);
@@ -469,6 +460,8 @@ function renderFieldCard(field) {
         <div>
           ${isNew ? `<span class="inline-flex px-md py-xs bg-secondary-container text-on-secondary-container rounded-full font-caption text-caption mb-md">${state.strings.verification.newQuestion}</span>` : ""}
           <h3 class="font-title-sm text-title-sm text-on-surface">${field.label}</h3>
+          ${field.help ? `<p class="font-caption text-caption text-on-surface-variant mt-xs max-w-[640px]">${field.help}</p>` : ""}
+          ${field.requiredHint ? `<p class="inline-flex items-center gap-xs mt-xs px-md py-xs bg-secondary-fixed text-on-secondary-fixed rounded-full font-caption text-caption"><span class="material-symbols-outlined text-[16px]">info</span>${field.requiredHint}</p>` : ""}
         </div>
         ${tag}
       </div>
@@ -496,12 +489,7 @@ function rerenderFieldCard(fieldKey) {
   newCard.querySelectorAll("[data-action]").forEach((el) => {
     el.addEventListener("click", handleAction);
   });
-  const input = newCard.querySelector("[data-draft-field]");
-  if (input) {
-    input.addEventListener("input", (event) => {
-      state.fieldDrafts[input.dataset.draftField] = event.target.value;
-    });
-  }
+  newCard.querySelectorAll("[data-draft-field]").forEach((el) => bindDraftField(el));
 }
 
 function renderConfirmButtons(field) {
@@ -517,11 +505,41 @@ function renderConfirmButtons(field) {
     </div>`;
 }
 
+function selectOptionsFor(field) {
+  if (Array.isArray(field.options)) return field.options.slice();
+  if (field.min !== undefined || field.max !== undefined) {
+    const min = field.min ?? 0;
+    const max = field.max ?? 10;
+    const list = [];
+    for (let n = min; n <= max; n += 1) list.push(String(n));
+    return list;
+  }
+  return [];
+}
+
 function renderEditControl(field, displayValue) {
   const draft = state.fieldDrafts[field.key] ?? (displayValue === state.strings.verification.sourceEmpty ? "" : displayValue);
-  const control = field.type === "textarea"
-    ? `<textarea class="w-full min-h-[120px] p-lg bg-[#FFF3E0] border border-[#E65100] rounded-lg font-body-md focus-ring" data-draft-field="${field.key}">${escapeHtml(draft)}</textarea>`
-    : `<input class="w-full h-[52px] px-lg bg-[#FFF3E0] border border-[#E65100] rounded-lg font-body-md focus-ring" type="${field.type === "email" ? "email" : field.type === "phone" ? "tel" : "text"}" value="${escapeAttr(draft)}" data-draft-field="${field.key}" />`;
+  let control;
+  if (field.type === "yes-no") {
+    control = `
+      <div class="flex gap-md" role="radiogroup">
+        ${["כן", "לא"].map((opt) => {
+          const on = draft === opt;
+          return `<button type="button" role="radio" aria-checked="${on}" class="min-h-[52px] flex-1 rounded-lg border-2 font-label-bold focus-ring ${on ? "bg-primary text-on-primary border-primary" : "bg-surface-container-lowest text-on-surface-variant border-outline-variant/60 hover:border-primary"}" data-action="set-draft" data-field-key="${escapeAttr(field.key)}" data-value="${escapeAttr(opt)}">${opt}</button>`;
+        }).join("")}
+      </div>`;
+  } else if (field.type === "select") {
+    const opts = selectOptionsFor(field);
+    control = `
+      <select class="w-full h-[52px] px-lg bg-[#FFF3E0] border border-[#E65100] rounded-lg font-body-md focus-ring" data-draft-field="${field.key}">
+        <option value="" ${draft === "" ? "selected" : ""}>בחרו…</option>
+        ${opts.map((opt) => `<option value="${escapeAttr(opt)}" ${String(draft) === String(opt) ? "selected" : ""}>${escapeHtml(opt)}</option>`).join("")}
+      </select>`;
+  } else {
+    control = field.type === "textarea"
+      ? `<textarea class="w-full min-h-[120px] p-lg bg-[#FFF3E0] border border-[#E65100] rounded-lg font-body-md focus-ring" data-draft-field="${field.key}">${escapeHtml(draft)}</textarea>`
+      : `<input class="w-full h-[52px] px-lg bg-[#FFF3E0] border border-[#E65100] rounded-lg font-body-md focus-ring" type="${field.type === "email" ? "email" : field.type === "phone" ? "tel" : "text"}" value="${escapeAttr(draft)}" data-draft-field="${field.key}" />`;
+  }
 
   return `
     <div class="space-y-md">
@@ -531,6 +549,70 @@ function renderEditControl(field, displayValue) {
         <button class="h-[44px] px-lg rounded-lg bg-primary text-on-primary font-label-bold focus-ring" data-action="save-field" data-field-key="${field.key}">${state.strings.verification.saveBtn}</button>
       </div>
     </div>`;
+}
+
+function subFieldValue(key) {
+  if (Object.prototype.hasOwnProperty.call(state.fieldDrafts, key)) return state.fieldDrafts[key];
+  const v = state.selectedResponse ? state.selectedResponse[key] : undefined;
+  return v === null || v === undefined ? "" : String(v);
+}
+
+function renderGradeCell(key, cellType, options) {
+  const value = subFieldValue(key);
+  const opts = cellType === "yes-no" ? ["כן", "לא"] : options;
+  return `
+    <select class="w-full h-[44px] px-sm bg-surface-container-low border border-outline rounded-lg font-body-md focus-ring" data-draft-field="${escapeAttr(key)}" data-autotrack="1">
+      <option value="" ${value === "" ? "selected" : ""}>—</option>
+      ${opts.map((opt) => `<option value="${escapeAttr(opt)}" ${String(value) === String(opt) ? "selected" : ""}>${escapeHtml(opt)}</option>`).join("")}
+    </select>`;
+}
+
+function renderGradeTable(field) {
+  const options = field.cellType === "yes-no" ? ["כן", "לא"] : selectOptionsFor(field);
+  const grades = [["g7", "ז'"], ["g8", "ח'"], ["g9", "ט'"]];
+  return `
+    <article class="field-card bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-xl soft-shadow" data-field-key="${escapeAttr(field.key)}">
+      <span class="inline-flex px-md py-xs bg-secondary-container text-on-secondary-container rounded-full font-caption text-caption mb-md">${state.strings.verification.newQuestion}</span>
+      <h3 class="font-title-sm text-title-sm text-on-surface">${field.label}</h3>
+      ${field.help ? `<p class="font-caption text-caption text-on-surface-variant mt-xs mb-md max-w-[640px]">${field.help}</p>` : '<div class="mb-md"></div>'}
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr>
+              <th class="text-right font-caption text-caption text-on-surface-variant p-sm"></th>
+              ${grades.map(([, label]) => `<th class="font-label-bold text-label-bold text-primary p-sm w-[28%]">שכבה ${label}</th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>
+            ${field.rows.map((row) => `
+              <tr class="border-t border-outline-variant/30">
+                <td class="font-body-md text-body-md text-on-surface p-sm">${escapeHtml(row.label)}</td>
+                ${grades.map(([g]) => `<td class="p-sm">${renderGradeCell(row.keys[g], field.cellType, options)}</td>`).join("")}
+              </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+    </article>`;
+}
+
+function renderCheckboxGroup(field) {
+  return `
+    <article class="field-card bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-xl soft-shadow" data-field-key="${escapeAttr(field.key)}">
+      <span class="inline-flex px-md py-xs bg-secondary-container text-on-secondary-container rounded-full font-caption text-caption mb-md">${state.strings.verification.newQuestion}</span>
+      <h3 class="font-title-sm text-title-sm text-on-surface mb-md">${field.label}</h3>
+      <div class="flex flex-col gap-sm">
+        ${field.options.map((opt) => {
+          const checked = subFieldValue(opt.key) === "כן";
+          const detail = opt.detailKey ? subFieldValue(opt.detailKey) : "";
+          return `
+            <label class="flex items-center gap-sm min-h-[44px] px-md rounded-lg border border-outline-variant/50 cursor-pointer hover:border-primary">
+              <input type="checkbox" class="w-5 h-5 accent-[#005c9b]" data-checkbox-key="${escapeAttr(opt.key)}" ${checked ? "checked" : ""} />
+              <span class="font-body-md text-body-md text-on-surface">${escapeHtml(opt.label)}</span>
+            </label>
+            ${opt.detailKey ? `<input class="w-full h-[48px] px-lg bg-surface-container-low border border-outline rounded-lg font-body-md focus-ring ${checked ? "" : "hidden"}" data-draft-field="${escapeAttr(opt.detailKey)}" data-autotrack="1" placeholder="${escapeAttr(opt.detailLabel || "פירוט")}" value="${escapeAttr(detail)}" />` : ""}`;
+        }).join("")}
+      </div>
+    </article>`;
 }
 
 const TOOL_OPTION_DEFS = [
@@ -612,12 +694,22 @@ function rerenderToolsMatrix() {
   const fresh = tmp.firstElementChild;
   existing.replaceWith(fresh);
   fresh.querySelectorAll("[data-action]").forEach((el) => el.addEventListener("click", handleAction));
-  const input = fresh.querySelector("[data-draft-field]");
-  if (input) {
-    input.addEventListener("input", (event) => {
-      state.fieldDrafts[input.dataset.draftField] = event.target.value;
-    });
-  }
+  fresh.querySelectorAll("[data-draft-field]").forEach((el) => bindDraftField(el));
+}
+
+// לפני שליחה סופית: כלי דיגיטלי שלא מולא (אין לו ערך מהשנה הקודמת ולא נבחר) — נרשם "לא משתמשים".
+function applyToolsDefault() {
+  const section = state.sections.find((s) => s.pattern === "C");
+  if (!section) return;
+  section.fields.forEach((field) => {
+    if (field.key === "tools_other_detail" || field.key === "tools_other_flag") return;
+    const hasDraft = Object.prototype.hasOwnProperty.call(state.fieldDrafts, field.key);
+    if (hasDraft) return;
+    if (mapLastYearTool(state.selectedResponse ? state.selectedResponse[field.key] : null) === null) {
+      state.fieldDrafts[field.key] = "לא משתמשים";
+      state.fieldStatus[field.key] = "updated";
+    }
+  });
 }
 
 function selectTool(key, value) {
@@ -630,9 +722,9 @@ function selectTool(key, value) {
 
 function renderSummary() {
   const t = state.strings.summary;
-  const totalFields = state.sections.reduce((sum, section) => sum + section.fields.length, 0);
+  const totalFields = countTotalFields();
   const updated = getUpdatedFields().length;
-  const confirmed = totalFields - updated;
+  const confirmed = Math.max(0, totalFields - updated);
   const doneSections = state.sections.length;
 
   return `
@@ -660,7 +752,7 @@ function renderSummary() {
               <div class="flex items-center justify-between gap-md rounded-lg border border-outline-variant/50 p-md">
                 <span class="font-body-md text-body-md">${section.id}. ${section.title}</span>
                 <span class="font-caption text-caption px-md py-xs rounded-full ${state.sectionStatus[section.id] ? "bg-on-tertiary-container text-tertiary" : "bg-surface-container text-on-surface-variant"}">
-                  ${section.fields.some((field) => state.fieldStatus[field.key] === "updated") ? "עודכן" : "אושר כברירת מחדל"}
+                  ${sectionHasUpdate(section) ? "עודכן" : "אושר כברירת מחדל"}
                 </span>
               </div>`).join("")}
           </div>
@@ -739,10 +831,33 @@ function bindEvents() {
   }
 
   document.querySelectorAll("[data-draft-field]").forEach((element) => {
-    element.addEventListener("input", (event) => {
-      state.fieldDrafts[event.target.dataset.draftField] = event.target.value;
+    bindDraftField(element);
+  });
+
+  document.querySelectorAll("[data-checkbox-key]").forEach((element) => {
+    element.addEventListener("change", (event) => {
+      const key = event.target.dataset.checkboxKey;
+      state.fieldDrafts[key] = event.target.checked ? "כן" : "לא";
+      state.fieldStatus[key] = "updated";
+      const detail = event.target.closest("label")?.nextElementSibling;
+      if (detail && detail.matches("[data-draft-field]")) detail.classList.toggle("hidden", !event.target.checked);
+      saveDraftForCurrentSection(false);
     });
   });
+}
+
+function bindDraftField(element) {
+  const handler = (event) => {
+    const key = event.target.dataset.draftField;
+    state.fieldDrafts[key] = event.target.value;
+    if (event.target.dataset.autotrack) {
+      if (String(event.target.value) === "") delete state.fieldStatus[key];
+      else state.fieldStatus[key] = "updated";
+      saveDraftForCurrentSection(false);
+    }
+  };
+  element.addEventListener("input", handler);
+  if (element.tagName === "SELECT") element.addEventListener("change", handler);
 }
 
 function handleAction(event) {
@@ -775,6 +890,7 @@ function handleAction(event) {
     "edit-field": () => setFieldStatus(button.dataset.fieldKey, "editing"),
     "cancel-edit": () => setFieldStatus(button.dataset.fieldKey, "idle"),
     "save-field": () => saveFieldUpdate(button.dataset.fieldKey),
+    "set-draft": () => { state.fieldDrafts[button.dataset.fieldKey] = button.dataset.value; rerenderFieldCard(button.dataset.fieldKey); },
     "approve-section": approveSection,
     "save-draft": () => saveDraftForCurrentSection(),
     "tool-select": () => selectTool(button.dataset.fieldKey, button.dataset.value),
@@ -1003,6 +1119,8 @@ async function submitFinal() {
     return;
   }
 
+  applyToolsDefault();
+
   try {
     const result = await apiPost({
       action: "submitFinal",
@@ -1027,10 +1145,35 @@ async function submitFinal() {
   }
 }
 
+function sectionHasUpdate(section) {
+  return section.fields.some((field) => {
+    if (state.fieldStatus[field.key] === "updated") return true;
+    if (field.type === "grade-table") {
+      return (field.rows || []).some((row) => ["g7", "g8", "g9"].some((g) => row.keys && state.fieldStatus[row.keys[g]] === "updated"));
+    }
+    if (field.type === "checkbox-group") {
+      return (field.options || []).some((opt) => state.fieldStatus[opt.key] === "updated" || (opt.detailKey && state.fieldStatus[opt.detailKey] === "updated"));
+    }
+    return false;
+  });
+}
+
+function countTotalFields() {
+  let total = 0;
+  state.sections.forEach((section) => {
+    section.fields.forEach((field) => {
+      if (field.type === "grade-table" && Array.isArray(field.rows)) total += field.rows.length * 3;
+      else if (field.type === "checkbox-group" && Array.isArray(field.options)) total += field.options.length;
+      else total += 1;
+    });
+  });
+  return total;
+}
+
 function getSummaryStats() {
-  const totalFields = state.sections.reduce((sum, section) => sum + section.fields.length, 0);
+  const totalFields = countTotalFields();
   const updated = getUpdatedFields().length;
-  return { totalFields, updated, confirmed: totalFields - updated, sections: state.sections.length };
+  return { totalFields, updated, confirmed: Math.max(0, totalFields - updated), sections: state.sections.length };
 }
 
 function sanitizeFilename(name) {
@@ -1115,29 +1258,48 @@ function waitForImages(root) {
 
 async function renderPdfWorker() {
   if (typeof window.html2pdf === "undefined") throw new Error("html2pdf לא נטען");
-  const element = buildPdfSummaryElement();
-  // כיסוי לבן מלא-מסך *מעל* העמוד: התוכן גלוי וממוקם רגיל, כך ש-html2canvas מצלם אותו נכון.
-  const overlay = document.createElement("div");
-  overlay.setAttribute("dir", "rtl");
-  overlay.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#ffffff;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:20px 0;";
-  element.style.position = "static";
-  element.style.flex = "0 0 auto";
-  overlay.appendChild(element);
-  document.body.appendChild(overlay);
-  const cleanup = () => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); };
+  const innerHtml = buildPdfSummaryElement().outerHTML;
+  const baseHref = window.location.href;
+
+  // רינדור בתוך iframe נקי לחלוטין — בלי ה-CSS של העמוד (Tailwind/CDN),
+  // שהוא הסיבה ש-html2canvas צילם דף ריק.
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.style.cssText = "position:fixed;left:0;top:0;width:820px;height:1400px;border:0;background:#ffffff;z-index:2147483647;";
+  document.body.appendChild(iframe);
+  const cleanup = () => { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); };
+
   try {
-    if (document.fonts && document.fonts.ready) {
-      try { await document.fonts.ready; } catch (e) {}
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(
+      '<!DOCTYPE html><html dir="rtl" lang="he"><head><meta charset="utf-8">' +
+      '<base href="' + baseHref + '">' +
+      '<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@200..800&display=swap" rel="stylesheet">' +
+      '<style>html,body{margin:0;padding:0;background:#fff;}</style></head><body>' +
+      innerHtml + '</body></html>'
+    );
+    doc.close();
+
+    await new Promise((res) => {
+      if (doc.readyState === "complete") return res();
+      iframe.addEventListener("load", res, { once: true });
+      window.setTimeout(res, 3000);
+    });
+    if (doc.fonts && doc.fonts.ready) {
+      try { await doc.fonts.ready; } catch (e) {}
     }
-    await waitForImages(element);
-    await new Promise((r) => window.setTimeout(r, 60));
+    await waitForImages(doc.body);
+    await new Promise((r) => window.setTimeout(r, 150));
+
+    const target = doc.body.firstElementChild;
     const worker = window.html2pdf().set({
       margin: [10, 10, 10, 10],
       filename: getPdfFileName(),
       image: { type: "jpeg", quality: 0.96 },
       html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-    }).from(element);
+    }).from(target);
     return { worker, cleanup };
   } catch (error) {
     cleanup();
@@ -1230,7 +1392,25 @@ async function apiPost(payload) {
 function getUpdatedFields() {
   const fieldsByKey = new Map();
   state.sections.forEach((section) => {
-    section.fields.forEach((field) => fieldsByKey.set(field.key, field));
+    section.fields.forEach((field) => {
+      fieldsByKey.set(field.key, field);
+      if (field.type === "grade-table" && Array.isArray(field.rows)) {
+        field.rows.forEach((row) => {
+          ["g7", "g8", "g9"].forEach((g) => {
+            if (row.keys && row.keys[g]) {
+              const label = `${field.label} · ${row.label} (${g === "g7" ? "ז'" : g === "g8" ? "ח'" : "ט'"})`;
+              fieldsByKey.set(row.keys[g], { key: row.keys[g], label });
+            }
+          });
+        });
+      }
+      if (field.type === "checkbox-group" && Array.isArray(field.options)) {
+        field.options.forEach((opt) => {
+          fieldsByKey.set(opt.key, { key: opt.key, label: `${field.label} · ${opt.label}` });
+          if (opt.detailKey) fieldsByKey.set(opt.detailKey, { key: opt.detailKey, label: `${field.label} · ${opt.detailLabel || opt.label}` });
+        });
+      }
+    });
   });
 
   return Object.entries(state.fieldStatus)

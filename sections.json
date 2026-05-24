@@ -18,7 +18,19 @@
     "description": "נתוני כוח האדם בצוות מדע וטכנולוגיה.",
     "fields": [
       { "key": "staff_teacher_count", "label": "מספר המורים המלמדים מו\"ט בחט\"ב", "pattern": "A", "type": "number" },
-      { "key": "staff_untrained_count", "label": "מורים ללא הכשרה מקצועית", "pattern": "A", "type": "text" },
+      {
+        "key": "staff_teachers_table",
+        "label": "כמה מורים מלמדים מו\"ט בכל שכבה? (מתוך כלל המורים)",
+        "pattern": "D",
+        "type": "grade-table",
+        "cellType": "select",
+        "min": 0,
+        "max": 9,
+        "rows": [
+          { "label": "מספר מורים", "keys": { "g7": "staff_teachers_g7", "g8": "staff_teachers_g8", "g9": "staff_teachers_g9" } }
+        ]
+      },
+      { "key": "staff_untrained_count", "label": "מורים ללא הכשרה מקצועית", "help": "מורה ללא הכשרה מקצועית = אין לו תעודת הוראה במו\"ט, וגם אין לו תואר ראשון במקצוע מדעי, וגם אין לו 3 שנות ניסיון בהוראת המדעים.", "pattern": "A", "type": "text" },
       { "key": "staff_missing_count", "label": "מורי מו\"ט חסרים", "pattern": "A", "type": "number" }
     ]
   },
@@ -56,81 +68,121 @@
   {
     "id": 5,
     "title": "פיתוח מקצועי",
-    "description": "מורים המשתלמים השנה ונושאים מבוקשים.",
+    "description": "מורים המתכננים להשתלם השנה ונושאים מבוקשים.",
     "fields": [
-      { "key": "pd_teachers_attending_this_year", "label": "כמה מורים מהצוות משתלמים בשנת תשפ\"ז?", "pattern": "A", "type": "number" },
+      { "key": "pd_teachers_attending_this_year", "label": "כמה מורים מהצוות מתכננים להשתלם בשנת תשפ\"ז בתחום מדע וטכנולוגיה חט\"ב?", "pattern": "A", "type": "number" },
       { "key": "pd_topics_requested", "label": "נושאי השתלמות מבוקשים", "pattern": "D", "type": "textarea" }
     ]
   },
   {
     "id": 6,
     "title": "ארגון הלמידה",
-    "description": "שעות הוראה וגודל קבוצות לפי שכבה.",
+    "description": "שעות הוראה וכיתות לפי שכבה.",
     "fields": [
-      { "key": "learning_hours_g7", "label": "שעות הוראה בשכבה ז'", "pattern": "A", "type": "text" },
-      { "key": "learning_hours_g8", "label": "שעות הוראה בשכבה ח'", "pattern": "A", "type": "text" },
-      { "key": "learning_hours_g9", "label": "שעות הוראה בשכבה ט'", "pattern": "A", "type": "text" },
-      { "key": "learning_group_size_g7", "label": "תלמידים בקבוצה - שכבה ז'", "pattern": "A", "type": "text" },
-      { "key": "learning_group_size_g8", "label": "תלמידים בקבוצה - שכבה ח'", "pattern": "A", "type": "text" },
-      { "key": "learning_group_size_g9", "label": "תלמידים בקבוצה - שכבה ט'", "pattern": "A", "type": "text" }
+      { "key": "learning_hours_g7", "label": "שעות הוראה בשבוע לתלמיד/ה - שכבה ז'", "requiredHint": "נדרש: 4+1 (כולל שעת תגבור — ישראל ריאלית)", "pattern": "A", "type": "text" },
+      { "key": "learning_hours_g8", "label": "שעות הוראה בשבוע לתלמיד/ה - שכבה ח'", "requiredHint": "נדרש: 5+1 (כולל שעת תגבור — ישראל ריאלית)", "pattern": "A", "type": "text" },
+      { "key": "learning_hours_g9", "label": "שעות הוראה בשבוע לתלמיד/ה - שכבה ט'", "requiredHint": "נדרש: 5", "pattern": "A", "type": "text" },
+      {
+        "key": "classes_table",
+        "label": "כיתות לפי שכבה",
+        "help": "ספרו כיתות רגילות בלבד (ללא עמ\"ט וחנ\"מ).",
+        "pattern": "D",
+        "type": "grade-table",
+        "cellType": "select",
+        "min": 0,
+        "max": 15,
+        "rows": [
+          { "label": "כמה כיתות רגילות יש לכם?", "keys": { "g7": "classes_regular_g7", "g8": "classes_regular_g8", "g9": "classes_regular_g9" } },
+          { "label": "מתוכן — כמה כיתות מעל 28 תלמידים?", "keys": { "g7": "classes_over28_g7", "g8": "classes_over28_g8", "g9": "classes_over28_g9" } }
+        ]
+      }
     ]
   },
   {
     "id": 7,
     "title": "מעבדות ומרחבי למידה",
-    "description": "חדרי מעבדה, תדירות שימוש ובקרה.",
+    "description": "חדרי מעבדה, שימוש בכיתות ומרחבי למידה.",
     "fields": [
-      { "key": "labs_total_count", "label": "מספר חדרי מעבדות", "pattern": "A", "type": "number" },
-      { "key": "labs_hatav_count", "label": "מעבדות לחט\"ב", "pattern": "A", "type": "number" },
-      { "key": "labs_frequency_g7", "label": "תדירות שיעורי מעבדה - ז'", "pattern": "A", "type": "text" },
-      { "key": "labs_frequency_g8", "label": "תדירות שיעורי מעבדה - ח'", "pattern": "A", "type": "text" },
-      { "key": "labs_frequency_g9", "label": "תדירות שיעורי מעבדה - ט'", "pattern": "A", "type": "text" },
-      { "key": "labs_support", "label": "תומכ/ת מעבדה", "pattern": "B", "type": "text" },
-      { "key": "labs_audit", "label": "בקרה במעבדה", "pattern": "A", "type": "text" },
-      { "key": "has_extra_spaces", "label": "מרחבי למידה נוספים?", "pattern": "B", "type": "yes-no" }
+      { "key": "labs_science_hatav", "label": "מספר חדרי מעבדות מדעים לחט\"ב", "pattern": "D", "type": "select", "min": 0, "max": 15 },
+      { "key": "labs_computer_hatav", "label": "מספר חדרי מחשבים לחט\"ב", "pattern": "D", "type": "select", "min": 0, "max": 15 },
+      {
+        "key": "lab_classes_table",
+        "label": "שימוש בכיתות במעבדות",
+        "pattern": "D",
+        "type": "grade-table",
+        "cellType": "select",
+        "min": 0,
+        "max": 15,
+        "rows": [
+          { "label": "כמה כיתות מקבלות לפחות שיעור אחד במעבדת מחשבים?", "keys": { "g7": "classes_computer_lab_g7", "g8": "classes_computer_lab_g8", "g9": "classes_computer_lab_g9" } },
+          { "label": "כמה כיתות מקבלות לפחות 2 שיעורים במעבדת מדע וטכנולוגיה?", "keys": { "g7": "classes_science_lab_g7", "g8": "classes_science_lab_g8", "g9": "classes_science_lab_g9" } }
+        ]
+      },
+      { "key": "labs_support", "label": "תומכ/ת מעבדה", "help": "כלומר לבורנט/ית הנותן/ת מענה לצרכי המקצוע בחט\"ב.", "pattern": "B", "type": "text" },
+      { "key": "labs_audit", "label": "האם בוצעה בקרה של משרד החינוך במעבדה?", "pattern": "A", "type": "select", "options": ["בשנה האחרונה", "בשנתיים האחרונות", "ב-3 שנים האחרונות", "3 שנים ומעלה"] },
+      {
+        "key": "spaces_group",
+        "label": "מרחבי למידה נוספים ומעבדות ייחודיות",
+        "pattern": "D",
+        "type": "checkbox-group",
+        "options": [
+          { "key": "space_makers", "label": "חדר מייקרס" },
+          { "key": "space_greenhouse", "label": "חממה אקולוגית" },
+          { "key": "space_imagination", "label": "חדר דמיון" },
+          { "key": "space_tapuach", "label": "אשכול — תפוח פיס" },
+          { "key": "space_tech_lab", "label": "מעבדה טכנולוגית" },
+          { "key": "space_other_flag", "label": "אחר", "detailKey": "space_other_detail", "detailLabel": "פירוט מרחב אחר" }
+        ]
+      }
     ]
   },
   {
     "id": 8,
-    "title": "מרחבי למידה נוספים",
-    "description": "מרחבים ייחודיים ואשכול פייס.",
+    "title": "חקר, ירידים ותחרויות",
+    "description": "ירידי חקר, יוזמות וכיתות מצוינות.",
     "fields": [
-      { "key": "extra_spaces_types", "label": "אילו מרחבים", "pattern": "B", "type": "text" },
-      { "key": "has_face_cluster", "label": "אשכול פייס?", "pattern": "B", "type": "yes-no" },
-      { "key": "face_cluster_hatav", "label": "תלמידי חט\"ב באשכול?", "pattern": "B", "type": "yes-no" },
-      { "key": "research_g9_status", "label": "תהליך חקר בשכבת ט'", "pattern": "A", "type": "text" }
+      { "key": "internal_fair", "label": "האם מתוכנן להתקיים יריד חקר בית ספרי?", "pattern": "B", "type": "yes-no" },
+      { "key": "district_fair_displayed", "label": "האם אתם מתכננים להגיע ליריד החקר המחוזי?", "pattern": "B", "type": "yes-no" },
+      { "key": "initiatives_planned", "label": "האם יש יוזמות מתוכננות?", "help": "כגון ימי שיא, ספקים חיצוניים לפעילויות.", "pattern": "D", "type": "textarea" },
+      { "key": "excellence_classes", "label": "כיתות מצוינות בחט\"ב", "help": "כגון כיתות עמ\"ט, מופת וכו'.", "pattern": "D", "type": "text" }
     ]
   },
   {
     "id": 9,
-    "title": "חקר, ירידים ותחרויות",
-    "description": "חקר מדעי, ירידים, יוזמות וכיתות מצוינות.",
-    "fields": [
-      { "key": "internal_fair", "label": "יריד בית ספרי", "pattern": "A", "type": "text" },
-      { "key": "district_fair_displayed", "label": "יריד מחוזי", "pattern": "B", "type": "text" },
-      { "key": "initiatives_past", "label": "יוזמות שהתקיימו", "pattern": "D", "type": "textarea" },
-      { "key": "initiatives_planned", "label": "יוזמות מתוכננות לתשפ\"ז", "pattern": "D", "type": "textarea" },
-      { "key": "initiatives_other", "label": "יוזמות אחרות", "pattern": "D", "type": "textarea" },
-      { "key": "excellence_classes", "label": "כיתות מצוינות בחט\"ב", "pattern": "D", "type": "text" }
-    ]
-  },
-  {
-    "id": 10,
     "title": "מצוינות, חנ\"מ, תכ\"ע וסיום",
     "description": "פעולות מצוינות, חינוך מיוחד, תוכניות עבודה והערות.",
     "fields": [
       { "key": "excellence_details", "label": "פירוט פעולות מצוינות", "pattern": "D", "type": "textarea" },
-      { "key": "has_special_ed", "label": "כיתות חינוך מיוחד?", "pattern": "B", "type": "yes-no" },
+      {
+        "key": "sped_classes_table",
+        "label": "כיתות חינוך מיוחד (חנ\"מ) לפי שכבה",
+        "pattern": "D",
+        "type": "grade-table",
+        "cellType": "select",
+        "min": 0,
+        "max": 15,
+        "rows": [
+          { "label": "כמה כיתות חנ\"מ יש?", "keys": { "g7": "sped_classes_g7", "g8": "sped_classes_g8", "g9": "sped_classes_g9" } },
+          { "label": "מתוכן — כמה משולבות?", "keys": { "g7": "sped_integrated_g7", "g8": "sped_integrated_g8", "g9": "sped_integrated_g9" } },
+          { "label": "מתוכן — כמה לא משולבות?", "keys": { "g7": "sped_not_integrated_g7", "g8": "sped_not_integrated_g8", "g9": "sped_not_integrated_g9" } }
+        ]
+      },
       { "key": "special_ed_hours_g7", "label": "חנ\"מ - שעות שכבה ז'", "pattern": "C", "type": "text" },
       { "key": "special_ed_hours_g8", "label": "חנ\"מ - שעות שכבה ח'", "pattern": "C", "type": "text" },
       { "key": "special_ed_hours_g9", "label": "חנ\"מ - שעות שכבה ט'", "pattern": "C", "type": "text" },
-      { "key": "special_ed_science_bg_g7", "label": "רקע מדעי מורי חנ\"מ - ז'", "pattern": "C", "type": "text" },
-      { "key": "special_ed_science_bg_g8", "label": "רקע מדעי מורי חנ\"מ - ח'", "pattern": "C", "type": "text" },
-      { "key": "special_ed_science_bg_g9", "label": "רקע מדעי מורי חנ\"מ - ט'", "pattern": "C", "type": "text" },
+      {
+        "key": "sped_qualified_table",
+        "label": "האם מורי המדעים בכיתות החנ\"מ מוכשרים למדע וטכנולוגיה?",
+        "pattern": "D",
+        "type": "grade-table",
+        "cellType": "yes-no",
+        "rows": [
+          { "label": "מוכשרים למו\"ט?", "keys": { "g7": "special_ed_science_bg_g7", "g8": "special_ed_science_bg_g8", "g9": "special_ed_science_bg_g9" } }
+        ]
+      },
       { "key": "special_ed_coordinator_name", "label": "פרטי מורה חנ\"מ", "pattern": "A", "type": "text" },
       { "key": "special_ed_coordinator_phone", "label": "טלפון מורה חנ\"מ", "pattern": "A", "type": "phone" },
       { "key": "special_ed_coordinator_email", "label": "מייל מורה חנ\"מ", "pattern": "A", "type": "email" },
-      { "key": "special_ed_bg_details", "label": "פירוט רקע", "pattern": "D", "type": "textarea" },
       { "key": "special_ed_in_lab_g7", "label": "חנ\"מ במעבדה - ז'", "pattern": "C", "type": "text" },
       { "key": "special_ed_in_lab_g8", "label": "חנ\"מ במעבדה - ח'", "pattern": "C", "type": "text" },
       { "key": "special_ed_in_lab_g9", "label": "חנ\"מ במעבדה - ט'", "pattern": "C", "type": "text" },
@@ -139,7 +191,7 @@
       { "key": "work_plan_file", "label": "תכ\"ע בית ספרית", "pattern": "D", "type": "file" },
       { "key": "gefen_purchased", "label": "הדרכת גפ\"ן?", "pattern": "A", "type": "text" },
       { "key": "support_request", "label": "רעיון/צורך", "pattern": "D", "type": "textarea" },
-      { "key": "general_notes", "label": "הערות", "pattern": "D", "type": "textarea" }
+      { "key": "general_notes", "label": "נקודות ודברים נוספים שתרצו להוסיף ולשתף:", "pattern": "D", "type": "textarea" }
     ]
   }
 ]
