@@ -2,7 +2,7 @@ const app = document.getElementById("app");
 const toast = document.getElementById("save-toast");
 const API_URL = "https://script.google.com/macros/s/AKfycbxaZ8PL7MBFxZdqH6jbdHuly5k9_NtxTkCRGTZ5mKYHE-6H2uy4De4JsUfopdsMrL9c/exec";
 // גרסה למניעת cache — מצמיד לכתובת קבצי הנתונים. לעדכון: שנו כאן וגם ב-index.html.
-const APP_VERSION = "20260524b";
+const APP_VERSION = "20260525a";
 
 const state = {
   strings: null,
@@ -105,7 +105,7 @@ function renderHeader() {
   const apiBadge = state.apiOnline ? "" : `
     <div class="flex items-center gap-xs rounded-full px-md py-xs font-caption text-caption bg-error-container text-on-error-container">
       <span class="material-symbols-outlined text-[18px]">cloud_off</span>
-      <span>אין חיבור — שמירה לא תיקלט</span>
+      <span>אין חיבור לאינטרנט — השמירה לא תיקלט</span>
     </div>`;
 
   return `

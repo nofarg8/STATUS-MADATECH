@@ -187,10 +187,9 @@
       { "key": "special_ed_in_lab_g8", "label": "חנ\"מ במעבדה - ח'", "pattern": "C", "type": "text" },
       { "key": "special_ed_in_lab_g9", "label": "חנ\"מ במעבדה - ט'", "pattern": "C", "type": "text" },
       { "key": "special_ed_plan_file", "label": "תכ\"ע חנ\"מ", "pattern": "D", "type": "file" },
-      { "key": "work_plan_status", "label": "תכ\"ע תשפ\"ז?", "pattern": "A", "type": "text" },
+      { "key": "work_plan_status", "label": "האם יש לכם תוכנית עבודה לתשפ\"ז?", "pattern": "A", "type": "text" },
       { "key": "work_plan_file", "label": "תכ\"ע בית ספרית", "pattern": "D", "type": "file" },
       { "key": "gefen_purchased", "label": "הדרכת גפ\"ן?", "pattern": "A", "type": "text" },
-      { "key": "support_request", "label": "רעיון/צורך", "pattern": "D", "type": "textarea" },
       { "key": "general_notes", "label": "נקודות ודברים נוספים שתרצו להוסיף ולשתף:", "pattern": "D", "type": "textarea" }
     ]
   }
