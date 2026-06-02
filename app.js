@@ -189,6 +189,15 @@ function renderWelcome() {
           ${state.apiOnline ? "" : `<div class="flex justify-center mt-md">${renderConnectionBadge()}</div>`}
         </div>
 
+        <div class="w-full max-w-[760px]">
+          <div class="relative w-full rounded-xl overflow-hidden soft-shadow border border-outline-variant/30 bg-black" style="aspect-ratio: 16 / 9;">
+            <iframe class="absolute inset-0 w-full h-full" src="https://www.youtube.com/embed/ktBA8z2u1TI"
+              title="סרטון הסבר לסטטוס מדע וטכנולוגיה תשפז" frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+          </div>
+        </div>
+
         <div class="relative w-44 h-44 md:w-56 md:h-56 flex items-center justify-center" aria-hidden="true">
           <div class="absolute inset-0 bg-primary-fixed/30 rounded-full blur-3xl"></div>
           <div class="relative z-10 w-full h-full rounded-full bg-surface-container-lowest border border-outline-variant/40 soft-shadow grid place-items-center">
