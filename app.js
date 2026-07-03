@@ -1,6 +1,6 @@
 const app = document.getElementById("app");
 const toast = document.getElementById("save-toast");
-const API_URL = "https://script.google.com/macros/s/AKfycbyqLbUpSJ-hEgFProGU2dvURa8rVhxQnrQI8VH9FjzCECp6XBR0axrIx9vHbiHyoS32/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzGWsz1-oFX2XA2_Jxq0rSWGv44zUNkz_fyEe037SRiQpnn186hN5-3-WOd0udISRK2/exec";
 // גרסה למניעת cache — מצמיד לכתובת קבצי הנתונים. לעדכון: שנו כאן וגם ב-index.html.
 const APP_VERSION = "20260525a";
 
