@@ -1,8 +1,8 @@
 const app = document.getElementById("app");
 const toast = document.getElementById("save-toast");
-const API_URL = "https://script.google.com/macros/s/AKfycbzGWsz1-oFX2XA2_Jxq0rSWGv44zUNkz_fyEe037SRiQpnn186hN5-3-WOd0udISRK2/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxaZ8PL7MBFxZdqH6jbdHuly5k9_NtxTkCRGTZ5mKYHE-6H2uy4De4JsUfopdsMrL9c/exec";
 // גרסה למניעת cache — מצמיד לכתובת קבצי הנתונים. לעדכון: שנו כאן וגם ב-index.html.
-const APP_VERSION = "20260525a";
+const APP_VERSION = "20260525b";
 
 const state = {
   strings: null,
@@ -253,7 +253,7 @@ function renderAuth() {
   const t = state.strings.auth;
   const school = state.selectedSchool || {};
   const waText = encodeURIComponent(`שלום נופר, אני רכז/ת ב${school.name || ""} (סמל ${school.id || ""}) והאימות לא עבר.`);
-  const waUrl = `https://wa.me/972506934423?text=${waText}`;
+  const waUrl = `https://wa.me/972523061869?text=${waText}`;
   return `
     <main class="screen flex-grow flex flex-col items-center justify-center px-lg py-4xl hero-gradient">
       <div class="max-w-[560px] w-full bg-surface-container-lowest p-xl rounded-xl soft-shadow border border-outline-variant/30 text-right space-y-lg">
